@@ -62,6 +62,10 @@
 #include "app_datapath_server.h" // Data Path Server Application Definitions
 #endif                           //(BLE_APP_DATAPATH_SERVER)
 
+#if (BLE_APP_OPB_CONFIG)
+#include "app_opb_config_server.h" // OpenPineBuds Config Server Application Definitions
+#endif                             //(BLE_APP_OPB_CONFIG)
+
 #if (BLE_APP_DIS)
 #include "app_dis.h" // Device Information Service Application Definitions
 #endif               //(BLE_APP_DIS)
@@ -329,6 +333,9 @@ static const appm_add_svc_func_t appm_add_svc_func_list[APPM_SVC_LIST_STOP] = {
 #if (BLE_APP_DATAPATH_SERVER)
     (appm_add_svc_func_t)app_datapath_add_datapathps,
 #endif //(BLE_APP_DATAPATH_SERVER)
+#if (BLE_APP_OPB_CONFIG)
+    (appm_add_svc_func_t)app_opb_config_add_server,
+#endif //(BLE_APP_OPB_CONFIG)
 #if (BLE_APP_VOICEPATH)
     (appm_add_svc_func_t)app_ble_voicepath_add_svc,
 #ifdef BISTO_ENABLED
@@ -490,6 +497,11 @@ void appm_init() {
   // Data Path Server Module
   app_datapath_server_init();
 #endif //(BLE_APP_DATAPATH_SERVER)
+
+#if (BLE_APP_OPB_CONFIG)
+  // OpenPineBuds Config Server Module
+  app_opb_config_server_init();
+#endif //(BLE_APP_OPB_CONFIG)
 #if (BLE_APP_AI_VOICE)
   // AI Voice Module
   app_ai_init();

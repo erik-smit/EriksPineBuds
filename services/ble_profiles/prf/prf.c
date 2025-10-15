@@ -208,6 +208,10 @@ extern const struct prf_task_cbs *voicepath_prf_itf_get(void);
 extern const struct prf_task_cbs *datapathps_prf_itf_get(void);
 #endif //(BLE_DATAPATH_SERVER)
 
+#if (BLE_OPB_CONFIG_SERVER)
+extern const struct prf_task_cbs *opb_configps_prf_itf_get(void);
+#endif //(BLE_OPB_CONFIG_SERVER)
+
 #if (BLE_OTA)
 extern const struct prf_task_cbs *ota_prf_itf_get(void);
 #endif //(BLE_OTA)
@@ -626,6 +630,12 @@ static const struct prf_task_cbs *prf_itf_get(uint16_t task_id) {
     prf_cbs = datapathps_prf_itf_get();
     break;
 #endif //(BLE_DATAPATH_SERVER)
+
+#if (BLE_OPB_CONFIG_SERVER)
+  case TASK_ID_OPB_CONFIGPS:
+    prf_cbs = opb_configps_prf_itf_get();
+    break;
+#endif //(BLE_OPB_CONFIG_SERVER)
 
   default: /* Nothing to do */
     break;

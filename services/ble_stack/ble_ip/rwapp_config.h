@@ -108,6 +108,13 @@
 #define BLE_APP_DATAPATH_SERVER 0
 #endif // defined(CFG_APP_DATAPATH_SERVER)
 
+/// OpenPineBuds Config Server Application
+#if defined(CFG_APP_OPB_CONFIG)
+#define BLE_APP_OPB_CONFIG 1
+#else // defined(CFG_APP_OPB_CONFIG)
+#define BLE_APP_OPB_CONFIG 0
+#endif // defined(CFG_APP_OPB_CONFIG)
+
 /// HID Application
 #if defined(CFG_APP_HID)
 #define BLE_APP_HID 1
