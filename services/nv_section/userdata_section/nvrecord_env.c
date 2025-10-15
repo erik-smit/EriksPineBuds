@@ -37,6 +37,16 @@ void nvrecord_rebuild_system_env(struct nvrecord_env_t *pSystemEnv) {
   pSystemEnv->aiManagerInfo.aiStatusDisableFlag = 0;
   pSystemEnv->aiManagerInfo.amaAssistantEnableStatus = 1;
 
+  // Initialize button configuration with defaults
+  opb_earbud_config_t default_left = OPB_CONFIG_DEFAULT_LEFT_INIT;
+  opb_earbud_config_t default_right = OPB_CONFIG_DEFAULT_RIGHT_INIT;
+  pSystemEnv->button_config.left = default_left;
+  pSystemEnv->button_config.right = default_right;
+  pSystemEnv->button_config.version_major = OPB_CONFIG_VERSION_MAJOR;
+  pSystemEnv->button_config.version_minor = OPB_CONFIG_VERSION_MINOR;
+  pSystemEnv->button_config.version_patch = OPB_CONFIG_VERSION_PATCH;
+  pSystemEnv->button_config.reserved = 0;
+
   localSystemInfo = *pSystemEnv;
 }
 
@@ -101,4 +111,33 @@ int nv_record_env_init(void) {
   nv_record_open(section_usrdata_ddbrecord);
   return 0;
 }
+
+// Get button configuration from NV storage
+int nv_record_get_button_config(opb_config_t **config) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!config)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  *config = &env->button_config;
+  return 0;
+}
+
+// Set button configuration and mark for save
+int nv_record_set_button_config(const opb_config_t *config) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!config)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  env->button_config = *config;
+  return nv_record_env_set(env);
+}
+
 #endif // #if defined(NEW_NV_RECORD_ENABLED)

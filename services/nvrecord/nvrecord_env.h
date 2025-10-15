@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 #include "me_api.h"
+#include "opb_config_common.h"
 
 #define NVRAM_ENV_INVALID (0xdead0000)
 #define NVRAM_ENV_MEDIA_LANGUAGE_DEFAULT (0)
@@ -74,6 +75,7 @@ struct nvrecord_env_t
 
     uint8_t  flag_value[8];
     AI_MANAGER_INFO_T   aiManagerInfo;
+    opb_config_t button_config;
 };
 
 int nv_record_env_init(void);
@@ -85,6 +87,10 @@ int nv_record_env_set(struct nvrecord_env_t *nvrecord_env);
 void nv_record_update_ibrt_info(uint32_t newMode,bt_bdaddr_t *ibrtPeerAddr);
 
 void nv_record_update_factory_tester_status(uint32_t status);
+
+int nv_record_get_button_config(opb_config_t **config);
+
+int nv_record_set_button_config(const opb_config_t *config);
 
 #ifdef __cplusplus
 }

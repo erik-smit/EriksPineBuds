@@ -39,6 +39,7 @@ ccflags-y := \
     -Iutils/heap \
     -Iservices/nvrecord \
     -Iservices/norflash_api \
+    -Iservices/ble_profiles/opb_config \
     -Iservices/nv_setion/userdata_section \
     -Iservices/voicepath/gsound/gsound_target_api_read_only \
     -Iservices/voicepath/gsound/gsound_custom/inc \

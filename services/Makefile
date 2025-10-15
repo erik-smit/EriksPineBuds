@@ -1,3 +1,6 @@
+# Global include for OPB config headers
+subdir-ccflags-y += -Iservices/ble_profiles/opb_config
+
 obj-y := audio_dump/ \
          audioflinger/ \
          audio_process/ \
@@ -10,6 +13,7 @@ obj-y := audio_dump/ \
          ../utils/heap/ \
          osif/ \
          norflash_api/ \
+         app_opb_config/ \
 
 ifeq ($(BONE_SENSOR_TDM),1)
 obj-y += bone_sensor/

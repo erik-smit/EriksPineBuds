@@ -23,6 +23,8 @@ ccflags-y +=  \
     -Iservices/overlay \
     -Iservices/resources \
     -Iservices/audio_process \
+    -Iservices/app_opb_config \
+    -Iservices/ble_profiles/opb_config \
     -Iapps/apptester \
     -Iapps/mic_alg \
     -Iapps/factory \

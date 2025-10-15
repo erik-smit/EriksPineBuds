@@ -48,6 +48,17 @@ static int nv_record_env_new(void) {
   nvrecord_env_p->aiManagerInfo.setedCurrentAi = 0;
   nvrecord_env_p->aiManagerInfo.aiStatusDisableFlag = 0;
   nvrecord_env_p->aiManagerInfo.amaAssistantEnableStatus = 1;
+
+  // Initialize button configuration with defaults
+  opb_earbud_config_t default_left = OPB_CONFIG_DEFAULT_LEFT_INIT;
+  opb_earbud_config_t default_right = OPB_CONFIG_DEFAULT_RIGHT_INIT;
+  nvrecord_env_p->button_config.left = default_left;
+  nvrecord_env_p->button_config.right = default_right;
+  nvrecord_env_p->button_config.version_major = OPB_CONFIG_VERSION_MAJOR;
+  nvrecord_env_p->button_config.version_minor = OPB_CONFIG_VERSION_MINOR;
+  nvrecord_env_p->button_config.version_patch = OPB_CONFIG_VERSION_PATCH;
+  nvrecord_env_p->button_config.reserved = 0;
+
   // nv_record_update_runtime_userdata();
 
   TRACE(2, "%s nvrecord_env_p:0x%x", __func__, (uint32_t)nvrecord_env_p);
@@ -128,6 +139,31 @@ void nv_record_update_ibrt_info(uint32_t newMode, bt_bdaddr_t *ibrtPeerAddr) {
     memcpy(nvrecord_env_p->ibrt_mode.record.bdAddr.address,
            ibrtPeerAddr->address, 6);
   }
+}
+
+// Get button configuration from NV storage
+int nv_record_get_button_config(opb_config_t **config) {
+  if (!config)
+    return -1;
+
+  if (!nvrecord_env_p)
+    return -1;
+
+  *config = &nvrecord_env_p->button_config;
+  return 0;
+}
+
+// Set button configuration and mark for save
+int nv_record_set_button_config(const opb_config_t *config) {
+  if (!config)
+    return -1;
+
+  if (!nvrecord_env_p)
+    return -1;
+
+  nvrecord_env_p->button_config = *config;
+  nv_record_update_runtime_userdata();
+  return 0;
 }
 
 #endif // #if !defined(NEW_NV_RECORD_ENABLED)

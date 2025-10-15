@@ -21,6 +21,7 @@
 #include "btif_sys_config.h"
 #include "me_api.h"
 #include <stdbool.h>
+#include "opb_config_common.h"
 
 // increase by 1 if the nvrecord's whole data structure is changed and the
 // content needs to be rebuilt
@@ -149,6 +150,7 @@ struct nvrecord_env_t {
 
   uint8_t flag_value[8];
   AI_MANAGER_INFO_T aiManagerInfo;
+  opb_config_t button_config;
 };
 
 typedef struct btdevice_volume {

@@ -56,6 +56,7 @@
 #include "app_tws_if.h"
 
 #include "app_anc.h"
+#include "app_opb_config.h"
 
 extern struct BT_DEVICE_T app_bt_device;
 
@@ -124,46 +125,66 @@ void send_enable_disable_anc(void) {
   app_ibrt_if_start_user_action(action, sizeof(action));
 }
 
+// Execute configured action based on action code
+void execute_button_action(opb_button_action_t action) {
+  TRACE(1, "[KEY] Executing action: %d", action);
+
+  switch (action) {
+    case OPB_ACTION_NONE:
+      break;
+    case OPB_ACTION_PLAY_PAUSE:
+      send_play_pause();
+      break;
+    case OPB_ACTION_NEXT_TRACK:
+      send_next_track();
+      break;
+    case OPB_ACTION_PREVIOUS_TRACK:
+      send_prev_track();
+      break;
+    case OPB_ACTION_VOLUME_UP:
+      send_vol_up();
+      break;
+    case OPB_ACTION_VOLUME_DOWN:
+      send_vol_down();
+      break;
+    case OPB_ACTION_TOGGLE_ANC:
+      send_enable_disable_anc();
+      break;
+    // TODO: Implement additional actions (voice assistant, call control, etc.)
+    case OPB_ACTION_VOICE_ASSISTANT:
+    case OPB_ACTION_ANSWER_CALL:
+    case OPB_ACTION_REJECT_CALL:
+    case OPB_ACTION_END_CALL:
+    case OPB_ACTION_MUTE_MIC:
+    case OPB_ACTION_TRANSPARENCY:
+    case OPB_ACTION_ANC_OFF:
+      TRACE(1, "[KEY] Action not yet implemented: %d", action);
+      break;
+    default:
+      TRACE(1, "[KEY] Unknown action: %d", action);
+      break;
+  }
+}
+
 void app_key_single_tap(APP_KEY_STATUS *status, void *param) {
   TRACE(2, "%s event %d", __func__, status->event);
-  /*
-  if (!app_tws_ibrt_tws_link_connected()) {
-    // No other bud paired
-    TRACE(0, "Handling %s in single bud mode", __func__);
-    send_play_pause();
-  } else {
-    // Bud's are working as a pair
-    if (app_tws_is_left_side()) {
-      TRACE(0, "Handling %s as left bud", __func__);
-      // Lefty
-      send_play_pause();
-    } else {
-      TRACE(0, "Handling %s as right bud", __func__);
-      // Righty
-      send_play_pause();
-    }
-  }
-  */
+
+  // Always play/pause with single tap - simple and consistent
   send_play_pause();
 }
 void app_key_double_tap(APP_KEY_STATUS *status, void *param) {
   TRACE(2, "%s event %d", __func__, status->event);
 
   if (!app_tws_ibrt_tws_link_connected()) {
-    // No other bud paired
+    // No other bud paired - use default (next track)
     TRACE(0, "Handling %s in single bud mode", __func__);
     send_next_track();
   } else {
-    // Bud's are working as a pair
-    if (app_tws_is_left_side()) {
-      TRACE(0, "Handling %s as left bud", __func__);
-      // Lefty
-      send_prev_track();
-    } else {
-      TRACE(0, "Handling %s as right bud", __func__);
-      // Righty
-      send_next_track();
-    }
+    // Bud's are working as a pair - use configured action
+    bool is_left = app_tws_is_left_side();
+    TRACE(1, "Handling %s as %s bud", __func__, is_left ? "left" : "right");
+    opb_button_action_t action = app_opb_config_get_action(is_left, OPB_GESTURE_DOUBLE_TAP);
+    execute_button_action(action);
   }
 }
 
@@ -171,20 +192,15 @@ void app_key_triple_tap(APP_KEY_STATUS *status, void *param) {
   TRACE(2, "%s event %d", __func__, status->event);
 
   if (!app_tws_ibrt_tws_link_connected()) {
-    // No other bud paired
+    // No other bud paired - use default (volume up)
     TRACE(0, "Handling %s in single bud mode", __func__);
     send_vol_up();
   } else {
-    // Bud's are working as a pair
-    if (app_tws_is_left_side()) {
-      TRACE(0, "Handling %s as left bud", __func__);
-      // Lefty
-      send_vol_down();
-    } else {
-      TRACE(0, "Handling %s as right bud", __func__);
-      // Righty
-      send_vol_up();
-    }
+    // Bud's are working as a pair - use configured action
+    bool is_left = app_tws_is_left_side();
+    TRACE(1, "Handling %s as %s bud", __func__, is_left ? "left" : "right");
+    opb_button_action_t action = app_opb_config_get_action(is_left, OPB_GESTURE_TRIPLE_TAP);
+    execute_button_action(action);
   }
 }
 void app_key_quad_tap(APP_KEY_STATUS *status, void *param) {
@@ -201,12 +217,15 @@ void app_key_long_press_down(APP_KEY_STATUS *status, void *param) {
   TRACE(2, "%s event %d", __func__, status->event);
 
   if (!app_tws_ibrt_tws_link_connected()) {
-    // No other bud paired
+    // No other bud paired - use default (previous track)
     TRACE(0, "Handling %s in single bud mode", __func__);
     send_prev_track();
   } else {
-    // Bud's are working as a pair
-    send_enable_disable_anc();
+    // Bud's are working as a pair - use configured action
+    bool is_left = app_tws_is_left_side();
+    TRACE(1, "Handling %s as %s bud", __func__, is_left ? "left" : "right");
+    opb_button_action_t action = app_opb_config_get_action(is_left, OPB_GESTURE_LONG_PRESS);
+    execute_button_action(action);
   }
 }
 
@@ -218,6 +237,9 @@ void app_key_reboot(APP_KEY_STATUS *status, void *param) {
 void app_key_init(void) {
   uint8_t i = 0;
   TRACE(1, "%s", __func__);
+
+  // Initialize button configuration
+  app_opb_config_init();
 
   const APP_KEY_HANDLE key_cfg[] = {
 

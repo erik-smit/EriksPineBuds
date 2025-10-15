@@ -37,6 +37,9 @@ void nv_record_update_ibrt_info(uint32_t newMode,bt_bdaddr_t *ibrtPeerAddr);
 void nvrecord_rebuild_system_env(struct nvrecord_env_t* pSystemEnv);
 void nv_record_update_factory_tester_status(uint32_t status);
 
+int nv_record_get_button_config(opb_config_t **config);
+int nv_record_set_button_config(const opb_config_t *config);
+
 #ifdef __cplusplus
 }
 #endif
