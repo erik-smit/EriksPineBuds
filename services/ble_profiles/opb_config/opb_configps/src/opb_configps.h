@@ -97,9 +97,10 @@ const struct prf_task_cbs* opb_configps_prf_itf_get(void);
  ****************************************************************************************
  * @brief Initialize task handler
  * @param task_desc Task descriptor to fill
+ * @param env Environment pointer
  ****************************************************************************************
  */
-void opb_configps_task_init(struct ke_task_desc *task_desc);
+void opb_configps_task_init(struct ke_task_desc *task_desc, struct opb_configps_env_tag *env);
 
 #endif /* BLE_OPB_CONFIG_SERVER */
 

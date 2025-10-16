@@ -50,4 +50,12 @@ ENV PATH="${PATH}:/src/gcc-arm-none-eabi-9-2019-q4-major/bin"
 COPY --from=rust_build /usr/src/bestool/bestool/target/release/bestool /usr/local/bin/bestool
 COPY . /usr/src
 
-ENTRYPOINT ["/bin/bash"]
+# Erik: Fix 
+#
+# C:\temp\OpenPineBudsApp\OpenPineBuds>docker compose run --rm builder bash
+# /bin/bash: /bin/bash: cannot execute binary file
+# C:\temp\OpenPineBudsApp\OpenPineBuds
+#
+# https://stackoverflow.com/posts/62313159/revisions
+
+# ENTRYPOINT [ "/bin/bash", "-l", "-c" ]

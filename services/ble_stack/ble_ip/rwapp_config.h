@@ -25,6 +25,9 @@
  * -----------------------------*/
 /******************************************************************************************/
 #define CFG_APP_DATAPATH_SERVER
+#define CFG_PRF_DATAPATH
+#define CFG_APP_OPB_CONFIG
+#define CFG_PRF_OPB_CONFIG
 
 #define FAST_PAIR_REV_1_0 0
 #define FAST_PAIR_REV_2_0 1

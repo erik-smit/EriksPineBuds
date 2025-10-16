@@ -167,33 +167,22 @@ static int gattc_write_req_ind_handler(ke_msg_id_t const msgid,
  ****************************************************************************************
  */
 
-/// Default State handlers definition
-const struct ke_msg_handler opb_configps_default_state[] = {
+/* Default State handlers definition. */
+KE_MSG_HANDLER_TAB(opb_configps){
     {GATTC_READ_REQ_IND, (ke_msg_func_t)gattc_read_req_ind_handler},
     {GATTC_WRITE_REQ_IND, (ke_msg_func_t)gattc_write_req_ind_handler},
 };
-
-/// Specifies the message handlers that are common to all states
-const struct ke_state_handler opb_configps_default_handler =
-    KE_STATE_HANDLER(opb_configps_default_state);
-
-/// Defines the placeholder for the states of all the task instances
-ke_state_t opb_configps_state[OPB_CONFIGPS_IDX_MAX];
 
 /**
  ****************************************************************************************
  * @brief Initialize task handler
  ****************************************************************************************
  */
-void opb_configps_task_init(struct ke_task_desc *task_desc) {
-    // Get the address of the environment
-    struct opb_configps_env_tag *opb_configps_env = PRF_ENV_GET(OPB_CONFIGPS, opb_configps);
-
-    task_desc->msg_handler_tab = opb_configps_default_state;
-    task_desc->msg_cnt = ARRAY_LEN(opb_configps_default_state);
-    task_desc->state = opb_configps_state;
-    task_desc->state_max = OPB_CONFIGPS_STATE_MAX;
-    task_desc->idx_max = OPB_CONFIGPS_IDX_MAX;
+void opb_configps_task_init(struct ke_task_desc *task_desc, struct opb_configps_env_tag *opb_configps_env) {
+    task_desc->msg_handler_tab = opb_configps_msg_handler_tab;
+    task_desc->msg_cnt = ARRAY_LEN(opb_configps_msg_handler_tab);
+    task_desc->state = &(opb_configps_env->state);
+    task_desc->idx_max = BLE_CONNECTION_MAX;
 }
 
 #endif /* BLE_OPB_CONFIG_SERVER */

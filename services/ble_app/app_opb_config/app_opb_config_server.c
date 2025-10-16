@@ -24,6 +24,7 @@
 #include "prf_utils.h"
 #include "string.h"
 #include "hal_trace.h"
+#include "app_ble_mode_switch.h"
 
 /*
  * GLOBAL VARIABLE DEFINITIONS
@@ -52,10 +53,25 @@ void app_opb_config_server_disconnected_evt_handler(uint8_t conidx) {
     }
 }
 
+static void app_opb_config_ble_data_fill_handler(void *param) {
+    TRACE(0, "[OPB_CFG_APP] Advertising data fill handler called");
+
+    // Simply enable advertising for our config service
+    // We don't need to add custom advertising data - the service UUID
+    // will be discoverable through GATT service discovery
+    app_ble_data_fill_enable(USER_OPB_CONFIG, true);
+}
+
 void app_opb_config_server_init(void) {
     // Reset the environment
     TRACE(0, "[OPB_CFG_APP] Initializing");
     app_opb_config_server_env.connectionIndex = 0xFF;
+
+    // Register advertising data fill handler
+    TRACE(0, "[OPB_CFG_APP] Registering advertising handler");
+    app_ble_register_data_fill_handle(USER_OPB_CONFIG,
+                                     (BLE_DATA_FILL_FUNC_T)app_opb_config_ble_data_fill_handler,
+                                     false);
 }
 
 void app_opb_config_add_server(void) {

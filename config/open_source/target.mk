@@ -210,7 +210,7 @@ export GFPS_ENABLE ?= 0
 
 export WL_UI ?= 1
 
-BLE ?= 0
+BLE ?= 1
 
 TOTA ?= 0
 
@@ -335,6 +335,12 @@ export BTADDR_FOR_DEBUG ?= 0
 export POWERKEY_I2C_SWITCH ?=0
 
 export WL_DET ?= 0
+
+# Debug mode: Keep BLE active while in charging case for UART debugging
+export DEBUG_FORCE_BOX_OPEN ?= 0
+ifeq ($(DEBUG_FORCE_BOX_OPEN),1)
+KBUILD_CPPFLAGS += -DDEBUG_FORCE_BOX_OPEN
+endif
 
 export AUDIO_LOOPBACK ?= 0
 

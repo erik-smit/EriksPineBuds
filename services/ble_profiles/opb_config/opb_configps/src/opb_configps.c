@@ -119,7 +119,7 @@ static uint8_t opb_configps_init(struct prf_task_env *env, uint16_t *start_hdl,
 
         // Initialize environment variable
         env->id = TASK_ID_OPB_CONFIGPS;
-        opb_configps_task_init(&(env->desc));
+        opb_configps_task_init(&(env->desc), opb_configps_env);
 
         ke_state_set(env->task, OPB_CONFIGPS_IDLE);
     }

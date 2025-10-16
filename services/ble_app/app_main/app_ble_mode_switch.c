@@ -340,6 +340,7 @@ static char *ble_adv_user2str(enum BLE_ADV_USER_E user) {
     CASE_S(USER_INTERCONNECTION)
     CASE_S(USER_TILE)
     CASE_S(USER_OTA)
+    CASE_S(USER_OPB_CONFIG)
     CASE_D()
   }
 }
@@ -933,6 +934,10 @@ void app_ble_start_connect(uint8_t *bdAddrToConnect) {
 }
 
 bool app_ble_is_connection_on(uint8_t index) {
+  // Check if BLE is initialized before accessing bleEnv
+  if (bleModeEnv.bleEnv == NULL) {
+    return false;
+  }
   return (BLE_CONNECTED == bleModeEnv.bleEnv->context[index].connectStatus);
 }
 
@@ -948,6 +953,12 @@ bool app_ble_is_any_connection_exist(void) {
 }
 
 void app_ble_start_disconnect(uint8_t conIdx) {
+  // Check if BLE is initialized before accessing bleEnv
+  if (bleModeEnv.bleEnv == NULL) {
+    LOG_I("BLE not initialized, cannot disconnect");
+    return;
+  }
+
   if (BLE_CONNECTED == bleModeEnv.bleEnv->context[conIdx].connectStatus) {
     LOG_I("will disconnect connection:%d", conIdx);
     bleModeEnv.bleEnv->context[conIdx].connectStatus = BLE_DISCONNECTING;
