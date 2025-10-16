@@ -299,14 +299,18 @@ static int gapm_cmp_evt_handler(ke_msg_id_t const msgid,
     }
   } break;
   case (GAPM_PROFILE_TASK_ADD): {
+    LOG_I("[OPB_DBG] GAPM_PROFILE_TASK_ADD completed! status=0x%02x", param->status);
     // ASSERT_INFO(param->status == GAP_ERR_NO_ERROR, param->operation,
     // param->status); Add the next requested service
     if (!appm_add_svc()) {
       // Go to the ready state
       ke_state_set(TASK_APP, APPM_READY);
 
+      LOG_I("[OPB_DBG] All services added, system ready");
       // No more service to add
       app_ble_system_ready();
+    } else {
+      LOG_I("[OPB_DBG] Adding next service in queue");
     }
   } break;
   // Device Configuration updated
@@ -754,7 +758,8 @@ static int gapm_profile_added_ind_handler(ke_msg_id_t const msgid,
                                           struct gapm_profile_added_ind *param,
                                           ke_task_id_t const dest_id,
                                           ke_task_id_t const src_id) {
-  LOG_I("prf_task_id %d is added.", param->prf_task_id);
+  LOG_I("[OPB_DBG] PROFILE ADDED! prf_task_id=%d (0x%04x), start_hdl=0x%04x",
+        param->prf_task_id, param->prf_task_id, param->start_hdl);
 
   return KE_MSG_CONSUMED;
 }

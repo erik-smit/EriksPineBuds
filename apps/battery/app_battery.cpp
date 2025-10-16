@@ -331,7 +331,11 @@ int app_battery_handle_process_normal(uint32_t status,
       TRACE(1, "%s:PLUGIN.", __func__);
       btusb_switch(BTUSB_MODE_USB);
 #else
-#if CHARGER_PLUGINOUT_RESET
+#ifdef DEBUG_DISABLE_CHARGER_RESET
+      // Debug mode: Stay running while charging for debugging
+      TRACE(0, "CHARGER PLUGIN - DEBUG MODE, NOT RESETTING");
+      app_battery_measure.status = APP_BATTERY_STATUS_CHARGING;
+#elif CHARGER_PLUGINOUT_RESET
       app_reset();
 #else
       app_battery_measure.status = APP_BATTERY_STATUS_CHARGING;
@@ -366,7 +370,11 @@ int app_battery_handle_process_charging(uint32_t status,
       TRACE(1, "%s:PlUGOUT.", __func__);
       btusb_switch(BTUSB_MODE_BT);
 #else
-#if CHARGER_PLUGINOUT_RESET
+#ifdef DEBUG_DISABLE_CHARGER_RESET
+      // Debug mode: Stay running after charger unplug for debugging
+      TRACE(0, "CHARGER PLUGOUT - DEBUG MODE, NOT RESETTING");
+      app_battery_measure.status = APP_BATTERY_STATUS_NORMAL;
+#elif CHARGER_PLUGINOUT_RESET
       TRACE(0, "CHARGING-->RESET");
       app_reset();
 #else
@@ -389,7 +397,11 @@ int app_battery_handle_process_charging(uint32_t status,
     if (app_status_indication_get() != APP_STATUS_INDICATION_FULLCHARGE) {
       TRACE(1, "FULL_CHARGING:%d", app_battery_measure.currvolt);
       app_status_indication_set(APP_STATUS_INDICATION_FULLCHARGE);
+#ifdef DEBUG_DISABLE_CHARGER_RESET
+      TRACE(0, "DEBUG: Battery full but NOT shutting down (DEBUG_DISABLE_CHARGER_RESET)");
+#else
       app_shutdown();
+#endif
 #ifdef MEDIA_PLAYER_SUPPORT
 #if defined(BT_USB_AUDIO_DUAL_MODE) || defined(IBRT)
 #else
@@ -549,7 +561,11 @@ int app_battery_open(void) {
           HAL_GPIO_DIR_OUT, 0);
     }
 
-#if (CHARGER_PLUGINOUT_RESET == 0)
+#ifdef DEBUG_DISABLE_CHARGER_RESET
+    // Debug mode: Boot normally even while charging
+    TRACE(0, "DEBUG: Charging detected but booting normally (DEBUG_DISABLE_CHARGER_RESET)");
+    nRet = APP_BATTERY_OPEN_MODE_CHARGING_PWRON;
+#elif (CHARGER_PLUGINOUT_RESET == 0)
     nRet = APP_BATTERY_OPEN_MODE_CHARGING_PWRON;
 #else
     nRet = APP_BATTERY_OPEN_MODE_CHARGING;

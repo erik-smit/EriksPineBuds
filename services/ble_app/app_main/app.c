@@ -541,7 +541,8 @@ bool appm_add_svc(void) {
     ASSERT_INFO(appm_add_svc_func_list[app_env.next_svc] != NULL,
                 app_env.next_svc, 1);
 
-    BLE_APP_DBG("appm_add_svc adds service");
+    LOG_I("[OPB_DBG] appm_add_svc adding service #%d (func=0x%08x)",
+          app_env.next_svc, (uint32_t)appm_add_svc_func_list[app_env.next_svc]);
 
     // Call the function used to add the required service
     appm_add_svc_func_list[app_env.next_svc]();
@@ -550,8 +551,7 @@ bool appm_add_svc(void) {
     app_env.next_svc++;
     more_svc = true;
   } else {
-    BLE_APP_DBG("appm_add_svc doesn't execute, next svc is %d",
-                app_env.next_svc);
+    LOG_I("[OPB_DBG] appm_add_svc done, next_svc=%d (STOP)", app_env.next_svc);
   }
 
   return more_svc;

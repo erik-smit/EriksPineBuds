@@ -9,6 +9,11 @@
 
 #if (BLE_APP_OPB_CONFIG)
 
+// Compile-time verification that BLE_APP_OPB_CONFIG is defined
+#if !defined(BLE_APP_OPB_CONFIG) || (BLE_APP_OPB_CONFIG == 0)
+#error "BLE_APP_OPB_CONFIG is not properly defined!"
+#endif
+
 /*
  * INCLUDE FILES
  ****************************************************************************************
@@ -75,11 +80,13 @@ void app_opb_config_server_init(void) {
 }
 
 void app_opb_config_add_server(void) {
-    TRACE(0, "[OPB_CFG_APP] Adding OPB Config Server to GATT database");
+    TRACE(0, "[OPB_CFG_APP] *** ADD_SERVER CALLED! Adding OPB Config Server to GATT database");
 
     struct gapm_profile_task_add_cmd *req =
         KE_MSG_ALLOC_DYN(GAPM_PROFILE_TASK_ADD_CMD, TASK_GAPM, TASK_APP,
                          gapm_profile_task_add_cmd, 0);
+
+    TRACE(0, "[OPB_CFG_APP] Allocated message for GAPM_PROFILE_TASK_ADD");
 
     // Fill message
     req->operation = GAPM_PROFILE_TASK_ADD;
@@ -88,8 +95,13 @@ void app_opb_config_add_server(void) {
     req->app_task = TASK_APP;
     req->start_hdl = 0; // Dynamically allocated
 
+    TRACE(3, "[OPB_CFG_APP] Sending GAPM_PROFILE_TASK_ADD: prf_task_id=0x%04x, app_task=0x%04x, start_hdl=0x%04x",
+          req->prf_task_id, req->app_task, req->start_hdl);
+
     // Send the message
     ke_msg_send(req);
+
+    TRACE(0, "[OPB_CFG_APP] Message sent successfully");
 }
 
 #endif //(BLE_APP_OPB_CONFIG)

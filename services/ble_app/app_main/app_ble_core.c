@@ -158,12 +158,6 @@ static void ble_callback_ibrt_event_entry_handler(ble_callback_evnet_t *event,
 #if defined(IBRT)
   uint8_t ibrt_evt_type = event->p.ibrt_event_entry_handled.event;
 
-#ifdef DEBUG_FORCE_BOX_OPEN
-  // Debug mode: Ignore box events to keep BLE active while in case
-  LOG_I("%s IGNORING evt_type %d - DEBUG_FORCE_BOX_OPEN enabled", __func__, ibrt_evt_type);
-  return;
-#endif
-
   LOG_I("%s evt_type %d", __func__, ibrt_evt_type);
   if (IBRT_OPEN_BOX_EVENT == ibrt_evt_type) {
     app_ble_force_switch_adv(BLE_SWITCH_USER_BOX, true);

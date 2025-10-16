@@ -12,6 +12,12 @@
 #include "rwip_config.h"
 
 #if (BLE_OPB_CONFIG_SERVER)
+
+// Compile-time verification that BLE_OPB_CONFIG_SERVER is defined
+#if !defined(BLE_OPB_CONFIG_SERVER) || (BLE_OPB_CONFIG_SERVER == 0)
+#error "BLE_OPB_CONFIG_SERVER is not properly defined!"
+#endif
+
 #include "attm.h"
 #include "opb_configps.h"
 #include "opb_configps_task.h"
@@ -95,6 +101,8 @@ static uint8_t opb_configps_init(struct prf_task_env *env, uint16_t *start_hdl,
                                  uint16_t app_task, uint8_t sec_lvl, void *params) {
     uint8_t status;
 
+    TRACE(2, "[OPB_CFG_PRF] Init called, start_hdl=0x%04x, task=0x%04x", *start_hdl, env->task);
+
     // Add Service Into Database
     status = attm_svc_create_db_128(
         start_hdl, OPB_CONFIG_SERVICE_UUID_128, NULL, OPB_CONFIGPS_IDX_NB, NULL,
@@ -102,8 +110,11 @@ static uint8_t opb_configps_init(struct prf_task_env *env, uint16_t *start_hdl,
         (sec_lvl & (PERM_MASK_SVC_DIS | PERM_MASK_SVC_AUTH | PERM_MASK_SVC_EKS)) |
             PERM(SVC_MI, DISABLE) | PERM_VAL(SVC_UUID_LEN, PERM_UUID_128));
 
+    TRACE(2, "[OPB_CFG_PRF] attm_svc_create_db_128 returned status=0x%02x, start_hdl=0x%04x", status, *start_hdl);
+
     // Allocate OPB_CONFIGPS required environment variable
     if (status == ATT_ERR_NO_ERROR) {
+        TRACE(0, "[OPB_CFG_PRF] Service created successfully!");
         struct opb_configps_env_tag *opb_configps_env =
             (struct opb_configps_env_tag *)ke_malloc(
                 sizeof(struct opb_configps_env_tag), KE_MEM_ATT_DB);
@@ -122,6 +133,8 @@ static uint8_t opb_configps_init(struct prf_task_env *env, uint16_t *start_hdl,
         opb_configps_task_init(&(env->desc), opb_configps_env);
 
         ke_state_set(env->task, OPB_CONFIGPS_IDLE);
+    } else {
+        TRACE(1, "[OPB_CFG_PRF] ERROR: Service creation failed with status=0x%02x", status);
     }
 
     return status;
