@@ -61,9 +61,31 @@ void app_opb_config_server_disconnected_evt_handler(uint8_t conidx) {
 static void app_opb_config_ble_data_fill_handler(void *param) {
     TRACE(0, "[OPB_CFG_APP] Advertising data fill handler called");
 
-    // Simply enable advertising for our config service
-    // We don't need to add custom advertising data - the service UUID
-    // will be discoverable through GATT service discovery
+    BLE_ADV_PARAM_T *advParam = (BLE_ADV_PARAM_T *)param;
+
+    // Add 128-bit service UUID to advertising data
+    // Format: [Length] [Type] [UUID bytes (16 bytes, little-endian)]
+    // Service UUID: 0000FFC0-0000-1000-8000-00805F9B34FB
+
+    uint8_t service_uuid_128[16] = {
+        0xFB, 0x34, 0x9B, 0x5F, 0x80, 0x00, // Last 6 bytes
+        0x00, 0x80,                         // Middle 2 bytes
+        0x00, 0x10,                         // Next 2 bytes
+        0x00, 0x00,                         // Next 2 bytes
+        0xC0, 0xFF, 0x00, 0x00              // First 4 bytes (0xFFC0)
+    };
+
+    // Add service UUID to advertising data
+    // Length byte: 1 (type) + 16 (UUID) = 17
+    advParam->advData[advParam->advDataLen++] = 17;
+    // Type: GAP_AD_TYPE_COMPLETE_LIST_128_BIT_UUID (0x07)
+    advParam->advData[advParam->advDataLen++] = 0x07;
+    // UUID bytes (little-endian)
+    memcpy(&advParam->advData[advParam->advDataLen], service_uuid_128, 16);
+    advParam->advDataLen += 16;
+
+    TRACE(1, "[OPB_CFG_APP] Added 128-bit service UUID to advertising data, total length: %d", advParam->advDataLen);
+
     app_ble_data_fill_enable(USER_OPB_CONFIG, true);
 }
 
