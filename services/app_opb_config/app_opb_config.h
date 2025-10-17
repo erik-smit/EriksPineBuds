@@ -50,6 +50,11 @@ int app_opb_config_set(const opb_config_t *config, bool save_to_nv);
  */
 int app_opb_config_reset(void);
 
+/**
+ * Initialize TWS sync for config sharing between earbuds
+ */
+void app_opb_config_tws_sync_init(void);
+
 #ifdef __cplusplus
 }
 #endif

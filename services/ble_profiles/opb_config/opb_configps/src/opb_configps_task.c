@@ -26,6 +26,10 @@
 #include "app_opb_config.h"
 #include "opb_config_common.h"
 
+#ifdef TWS_SYSTEM_ENABLED
+#include "app_tws_if.h"
+#endif
+
 /*
  * LOCAL FUNCTIONS DEFINITIONS
  ****************************************************************************************
@@ -114,35 +118,57 @@ static int gattc_write_req_ind_handler(ke_msg_id_t const msgid,
     if (opb_configps_env != NULL) {
         if (param->handle == (opb_configps_env->shdl + OPB_CONFIGPS_IDX_LEFT_CFG_VAL)) {
             // Write left earbud configuration
+            TRACE(0, "[OPB_CFG_TASK] BLE write to left config characteristic");
             if (param->length == sizeof(opb_earbud_config_t)) {
                 opb_config_t config;
                 if (app_opb_config_get(&config) == 0) {
                     memcpy(&config.left, param->value, sizeof(opb_earbud_config_t));
                     // Save to NV storage
                     if (app_opb_config_set(&config, true) != 0) {
+                        TRACE(0, "[OPB_CFG_TASK] Failed to save left config");
                         status = ATT_ERR_APP_ERROR;
+                    } else {
+                        TRACE(0, "[OPB_CFG_TASK] Left config saved successfully");
+#ifdef TWS_SYSTEM_ENABLED
+                        // Sync config to peer earbud if TWS link is active
+                        TRACE(0, "[OPB_CFG_TASK] Triggering TWS sync for left config");
+                        app_tws_if_sync_info(TWS_SYNC_USER_OPB_CONFIG);
+#endif
                     }
                 } else {
+                    TRACE(0, "[OPB_CFG_TASK] Failed to get current config");
                     status = ATT_ERR_APP_ERROR;
                 }
             } else {
+                TRACE(2, "[OPB_CFG_TASK] Invalid length: %d, expected: %d", param->length, sizeof(opb_earbud_config_t));
                 status = ATT_ERR_INVALID_ATTRIBUTE_VAL_LEN;
             }
         }
         else if (param->handle == (opb_configps_env->shdl + OPB_CONFIGPS_IDX_RIGHT_CFG_VAL)) {
             // Write right earbud configuration
+            TRACE(0, "[OPB_CFG_TASK] BLE write to right config characteristic");
             if (param->length == sizeof(opb_earbud_config_t)) {
                 opb_config_t config;
                 if (app_opb_config_get(&config) == 0) {
                     memcpy(&config.right, param->value, sizeof(opb_earbud_config_t));
                     // Save to NV storage
                     if (app_opb_config_set(&config, true) != 0) {
+                        TRACE(0, "[OPB_CFG_TASK] Failed to save right config");
                         status = ATT_ERR_APP_ERROR;
+                    } else {
+                        TRACE(0, "[OPB_CFG_TASK] Right config saved successfully");
+#ifdef TWS_SYSTEM_ENABLED
+                        // Sync config to peer earbud if TWS link is active
+                        TRACE(0, "[OPB_CFG_TASK] Triggering TWS sync for right config");
+                        app_tws_if_sync_info(TWS_SYNC_USER_OPB_CONFIG);
+#endif
                     }
                 } else {
+                    TRACE(0, "[OPB_CFG_TASK] Failed to get current config");
                     status = ATT_ERR_APP_ERROR;
                 }
             } else {
+                TRACE(2, "[OPB_CFG_TASK] Invalid length: %d, expected: %d", param->length, sizeof(opb_earbud_config_t));
                 status = ATT_ERR_INVALID_ATTRIBUTE_VAL_LEN;
             }
         }

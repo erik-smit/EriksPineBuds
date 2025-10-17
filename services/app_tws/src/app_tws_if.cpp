@@ -25,6 +25,7 @@
 #include "app_bt_stream.h"
 #include "app_dip.h"
 #include "app_ibrt_ui.h"
+#include "app_opb_config.h"
 #include "app_sec.h"
 #include "app_tws_ctrl_thread.h"
 #include "app_tws_ibrt_cmd_handler.h"
@@ -119,6 +120,7 @@ static const char *tws_sync_user2str(TWS_SYNC_USER_E user) {
     CASES(TWS_SYNC_USER_AI_INFO);
     CASES(TWS_SYNC_USER_AI_MANAGER);
     CASES(TWS_SYNC_USER_DIP);
+    CASES(TWS_SYNC_USER_OPB_CONFIG);
 
   default:
     str = "[INVALID]";
@@ -168,6 +170,9 @@ void app_tws_if_init(void) {
 #ifdef BTIF_DIP_DEVICE
   app_dip_sync_init();
 #endif
+
+  // Initialize OpenPineBuds config sync
+  app_opb_config_tws_sync_init();
 }
 
 void app_tws_if_role_switch_started_handler(void) {

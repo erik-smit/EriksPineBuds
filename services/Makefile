@@ -1,5 +1,11 @@
 # Global include for OPB config headers
 subdir-ccflags-y += -Iservices/ble_profiles/opb_config
+subdir-ccflags-y += -Iservices/app_opb_config
+
+# Include path for TWS headers when TWS is enabled
+ifeq ($(TWS_SYSTEM_ENABLED),1)
+subdir-ccflags-y += -Iservices/app_tws/inc
+endif
 
 obj-y := audio_dump/ \
          audioflinger/ \

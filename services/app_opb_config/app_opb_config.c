@@ -3,6 +3,10 @@
 #include "hal_trace.h"
 #include <string.h>
 
+#ifdef TWS_SYSTEM_ENABLED
+#include "app_tws_if.h"
+#endif
+
 // Current runtime configuration
 static opb_config_t current_config;
 static bool config_initialized = false;
@@ -147,3 +151,72 @@ static bool validate_config(const opb_config_t *config) {
 
     return true;
 }
+
+#ifdef TWS_SYSTEM_ENABLED
+// TWS sync prepare handler - serialize config to send to peer earbud
+static void opb_config_tws_sync_info_prepare_handler(uint8_t *buf, uint16_t *len) {
+    TRACE(0, "[OPB_CFG_TWS] Preparing config to sync to peer");
+
+    // Copy the entire config structure
+    memcpy(buf, &current_config, sizeof(opb_config_t));
+    *len = sizeof(opb_config_t);
+
+    TRACE(4, "[OPB_CFG_TWS] Prepared: Left ST=%d DT=%d TT=%d LP=%d",
+          current_config.left.single_tap,
+          current_config.left.double_tap,
+          current_config.left.triple_tap,
+          current_config.left.long_press);
+    TRACE(4, "[OPB_CFG_TWS] Prepared: Right ST=%d DT=%d TT=%d LP=%d",
+          current_config.right.single_tap,
+          current_config.right.double_tap,
+          current_config.right.triple_tap,
+          current_config.right.long_press);
+}
+
+// TWS sync received handler - deserialize and apply config from peer earbud
+static void opb_config_tws_sync_info_received_handler(uint8_t *buf, uint16_t len) {
+    TRACE(2, "[OPB_CFG_TWS] Received config from peer, len=%d", len);
+
+    if (len != sizeof(opb_config_t)) {
+        TRACE(2, "[OPB_CFG_TWS] ERROR: Invalid length %d, expected %d",
+              len, sizeof(opb_config_t));
+        return;
+    }
+
+    opb_config_t *received_config = (opb_config_t *)buf;
+
+    TRACE(4, "[OPB_CFG_TWS] Received: Left ST=%d DT=%d TT=%d LP=%d",
+          received_config->left.single_tap,
+          received_config->left.double_tap,
+          received_config->left.triple_tap,
+          received_config->left.long_press);
+    TRACE(4, "[OPB_CFG_TWS] Received: Right ST=%d DT=%d TT=%d LP=%d",
+          received_config->right.single_tap,
+          received_config->right.double_tap,
+          received_config->right.triple_tap,
+          received_config->right.long_press);
+
+    // Apply the received config (save to both RAM and NV)
+    if (app_opb_config_set(received_config, true) == 0) {
+        TRACE(0, "[OPB_CFG_TWS] Config applied successfully from peer");
+    } else {
+        TRACE(0, "[OPB_CFG_TWS] ERROR: Failed to apply config from peer");
+    }
+}
+
+// Initialize TWS sync for OPB config
+void app_opb_config_tws_sync_init(void) {
+    TRACE(0, "[OPB_CFG_TWS] Initializing TWS sync");
+
+    TWS_SYNC_USER_T user_opb_config = {
+        .sync_info_prepare_handler = opb_config_tws_sync_info_prepare_handler,
+        .sync_info_received_handler = opb_config_tws_sync_info_received_handler,
+        .sync_info_prepare_rsp_handler = opb_config_tws_sync_info_prepare_handler,
+        .sync_info_rsp_received_handler = opb_config_tws_sync_info_received_handler,
+        .sync_info_rsp_timeout_handler = NULL,
+    };
+
+    app_tws_if_register_sync_user(TWS_SYNC_USER_OPB_CONFIG, &user_opb_config);
+    TRACE(0, "[OPB_CFG_TWS] TWS sync initialized");
+}
+#endif // TWS_SYSTEM_ENABLED
