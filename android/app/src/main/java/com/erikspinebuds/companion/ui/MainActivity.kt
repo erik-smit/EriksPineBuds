@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.ui
+package com.erikspinebuds.companion.ui
 
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
@@ -10,11 +10,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.openpinebuds.companion.R
-import com.openpinebuds.companion.data.ButtonAction
-import com.openpinebuds.companion.data.GestureType
-import com.openpinebuds.companion.databinding.ActivityMainBinding
-import com.openpinebuds.companion.util.PermissionHelper
+import com.erikspinebuds.companion.R
+import com.erikspinebuds.companion.data.ButtonAction
+import com.erikspinebuds.companion.data.GestureType
+import com.erikspinebuds.companion.databinding.ActivityMainBinding
+import com.erikspinebuds.companion.util.PermissionHelper
 import kotlinx.coroutines.launch
 
 /**

@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.util
+package com.erikspinebuds.companion.util
 
 /**
  * CRC-16/XMODEM implementation for apply command checksum

@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.data
+package com.erikspinebuds.companion.data
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

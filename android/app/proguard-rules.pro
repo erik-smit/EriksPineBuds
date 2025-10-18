@@ -9,7 +9,7 @@
 -keep class android.bluetooth.** { *; }
 
 # Keep data classes
--keep class com.openpinebuds.companion.data.** { *; }
+-keep class com.erikspinebuds.companion.data.** { *; }
 
 # Coroutines
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}

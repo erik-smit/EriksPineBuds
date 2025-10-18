@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.data
+package com.erikspinebuds.companion.data
 
 /**
  * Button actions that can be assigned to gestures.

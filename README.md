@@ -5,6 +5,44 @@ The docker image will build bestool for you first, then drop you into the dev co
 
 NOTE: Currently, the SDK is not licensed under an 'open source' license. We are working to resolve this issue, and will be reaching out to contributors and other parties soon. For now, consider this SDK as 'All Rights Reserved'/'shared source'.
 
+## ✨ New: Configurable Touch Controls via Android App
+
+**This fork adds fully customizable touch controls for your PineBuds!**
+
+Configure single tap, double tap, triple tap, and long press actions for each earbud independently using the companion Android app. Your custom settings are stored in the earbuds and persist across reboots.
+
+### Features
+
+- **📱 Android Companion App**: Easy-to-use app for configuring touch controls via Bluetooth LE
+- **🎯 Per-Earbud Configuration**: Customize left and right earbuds independently
+- **🔄 Persistent Storage**: Settings saved to NV flash and survive reboots
+- **⚡ Real-time Updates**: Changes apply immediately to your earbuds
+- **🎵 14 Actions Available**: Play/Pause, Next, Previous, Volume Up/Down, ANC Toggle, Voice Assistant, and more
+
+### Available Touch Actions
+
+- Play/Pause
+- Next Track
+- Previous Track
+- Volume Up
+- Volume Down
+- Toggle ANC
+- Voice Assistant (Siri/Google Assistant)
+- Toggle EQ
+- Enter Pairing Mode
+- Disconnect
+- Reset Device
+- Custom/None
+
+### Quick Start
+
+1. **Build and flash the firmware** (see Usage section below)
+2. **Install the Android companion app** from `android/` directory or download the APK from releases
+3. **Open the app** and connect to your PineBuds
+4. **Configure your touch controls** - changes save automatically!
+
+For detailed Android app instructions, see [android/README.md](android/README.md)
+
 ## Usage
 
 To use this setup to build & flash your PineBuds you will need a system with docker setup at the minimum.
@@ -38,6 +76,9 @@ bestool write-image out/open_source/open_source.bin --port /dev/ttyACM1
 
 ## Changelist from stock open source SDK
 
+- **Configurable touch controls via BLE GATT service and Android companion app**
+- **Per-earbud configuration with 14 available actions**
+- **Persistent configuration storage in NV flash**
 - Long hold (5 ish seconds) the button on the back when buds are in the case to force a device reboot (so it can be programmed)
 - Use the resistor in the buds to pick Left/Right rather than TWS master/slave pairing
 - Pressing the button on the back while in the case no longer triggers DFU mode
@@ -46,7 +87,9 @@ bestool write-image out/open_source/open_source.bin --port /dev/ttyACM1
 - Working (mostly) audio controls using the touch button on the buds
 - Turned off showing up as a HID keyboard, as not sure _why_ you would; but it stops android nagging me about a new keyboard
 
-## Current bud tap codes
+## Default Touch Controls
+
+**Note:** These are the default configurations. You can customize any of these actions using the Android companion app!
 
 ### Both pods active
 

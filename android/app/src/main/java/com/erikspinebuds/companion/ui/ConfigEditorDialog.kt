@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.ui
+package com.erikspinebuds.companion.ui
 
 import android.app.Dialog
 import android.os.Bundle
@@ -9,10 +9,10 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.openpinebuds.companion.R
-import com.openpinebuds.companion.data.ButtonAction
-import com.openpinebuds.companion.data.GestureType
-import com.openpinebuds.companion.databinding.DialogConfigEditorBinding
+import com.erikspinebuds.companion.R
+import com.erikspinebuds.companion.data.ButtonAction
+import com.erikspinebuds.companion.data.GestureType
+import com.erikspinebuds.companion.databinding.DialogConfigEditorBinding
 
 /**
  * Dialog for editing button action configuration

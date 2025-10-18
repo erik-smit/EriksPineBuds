@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.openpinebuds.companion'
+    namespace 'com.erikspinebuds.companion'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.openpinebuds.companion"
+        applicationId "com.erikspinebuds.companion"
         minSdk 21  // Android 5.0 for BLE support
         targetSdk 34
         versionCode 1

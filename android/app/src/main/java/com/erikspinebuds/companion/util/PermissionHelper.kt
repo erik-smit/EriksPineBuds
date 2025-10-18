@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.util
+package com.erikspinebuds.companion.util
 
 import android.Manifest
 import android.content.Context

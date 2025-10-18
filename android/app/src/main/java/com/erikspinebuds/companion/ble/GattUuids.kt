@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.ble
+package com.erikspinebuds.companion.ble
 
 import java.util.UUID
 

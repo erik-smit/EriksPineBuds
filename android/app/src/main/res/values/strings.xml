@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">OpenPineBuds</string>
+    <string name="app_name">Erik\'s PineBuds</string>
 
     <!-- Connection -->
     <string name="scanning">Scanning for devices…</string>
@@ -29,7 +29,7 @@
     <string name="permission_required">Location permission is required to scan for BLE devices</string>
     <string name="config_applied">Configuration applied successfully</string>
     <string name="config_failed">Failed to apply configuration</string>
-    <string name="device_not_found">OpenPineBuds not found</string>
+    <string name="device_not_found">Erik\'s PineBuds not found</string>
 
     <!-- Button Actions -->
     <string name="action_none">None</string>

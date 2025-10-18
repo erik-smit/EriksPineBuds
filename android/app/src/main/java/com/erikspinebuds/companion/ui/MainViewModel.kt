@@ -1,16 +1,16 @@
-package com.openpinebuds.companion.ui
+package com.erikspinebuds.companion.ui
 
 import android.app.Application
 import android.bluetooth.le.ScanResult
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.openpinebuds.companion.ble.BleEvent
-import com.openpinebuds.companion.ble.BleManager
-import com.openpinebuds.companion.ble.ConnectionState
-import com.openpinebuds.companion.ble.GattUuids
-import com.openpinebuds.companion.data.ButtonAction
-import com.openpinebuds.companion.data.EarbudConfig
+import com.erikspinebuds.companion.ble.BleEvent
+import com.erikspinebuds.companion.ble.BleManager
+import com.erikspinebuds.companion.ble.ConnectionState
+import com.erikspinebuds.companion.ble.GattUuids
+import com.erikspinebuds.companion.data.ButtonAction
+import com.erikspinebuds.companion.data.EarbudConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -226,7 +226,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Update left earbud action
      */
-    fun updateLeftAction(gesture: com.openpinebuds.companion.data.GestureType, action: ButtonAction) {
+    fun updateLeftAction(gesture: com.erikspinebuds.companion.data.GestureType, action: ButtonAction) {
         val newConfig = _leftConfig.value.copy()
         newConfig.setAction(gesture, action)
         _leftConfig.value = newConfig
@@ -235,7 +235,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Update right earbud action
      */
-    fun updateRightAction(gesture: com.openpinebuds.companion.data.GestureType, action: ButtonAction) {
+    fun updateRightAction(gesture: com.erikspinebuds.companion.data.GestureType, action: ButtonAction) {
         val newConfig = _rightConfig.value.copy()
         newConfig.setAction(gesture, action)
         _rightConfig.value = newConfig

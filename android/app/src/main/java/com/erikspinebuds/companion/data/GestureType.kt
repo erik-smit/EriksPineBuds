@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.data
+package com.erikspinebuds.companion.data
 
 /**
  * Touch gesture types supported by the earbuds

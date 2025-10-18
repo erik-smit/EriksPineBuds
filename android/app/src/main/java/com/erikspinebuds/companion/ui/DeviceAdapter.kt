@@ -1,4 +1,4 @@
-package com.openpinebuds.companion.ui
+package com.erikspinebuds.companion.ui
 
 import android.annotation.SuppressLint
 import android.bluetooth.le.ScanResult
@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.openpinebuds.companion.databinding.ItemDeviceBinding
+import com.erikspinebuds.companion.databinding.ItemDeviceBinding
 
 /**
  * RecyclerView adapter for displaying discovered BLE devices

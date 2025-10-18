@@ -38,7 +38,7 @@
             android:textStyle="bold"
             android:ellipsize="end"
             android:maxLines="1"
-            tools:text="OpenPineBuds"
+            tools:text="Erik's PineBuds"
             app:layout_constraintEnd_toStartOf="@+id/tv_signal_strength"
             app:layout_constraintStart_toEndOf="@+id/iv_device_icon"
             app:layout_constraintTop_toTopOf="@+id/iv_device_icon" />
