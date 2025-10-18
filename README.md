@@ -19,6 +19,16 @@ Configure single tap, double tap, triple tap, and long press actions for each ea
 - **⚡ Real-time Updates**: Changes apply immediately to your earbuds
 - **🎵 14 Actions Available**: Play/Pause, Next, Previous, Volume Up/Down, ANC Toggle, Voice Assistant, and more
 
+### Screenshots
+
+<p align="center">
+  <img src="docs/images/devices.png" width="45%" alt="Device Scanning Screen" />
+  <img src="docs/images/config.png" width="45%" alt="Configuration Screen" />
+</p>
+
+**Left**: Device scanning and connection screen showing available BES_ble devices
+**Right**: Configuration screen with customizable touch controls for each earbud
+
 ### Available Touch Actions
 
 - Play/Pause
