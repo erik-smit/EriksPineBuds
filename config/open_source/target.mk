@@ -1,6 +1,6 @@
 CHIP        ?= best2300p
 
-DEBUG       ?= 1
+DEBUG       ?= 0
 
 MBED        ?= 0
 
@@ -337,13 +337,13 @@ export POWERKEY_I2C_SWITCH ?=0
 export WL_DET ?= 0
 
 # Debug mode: Keep BLE active while in charging case for UART debugging
-export DEBUG_FORCE_BOX_OPEN ?= 1
+export DEBUG_FORCE_BOX_OPEN ?= 0
 ifeq ($(DEBUG_FORCE_BOX_OPEN),1)
 KBUILD_CPPFLAGS += -DDEBUG_FORCE_BOX_OPEN
 endif
 
 # Debug mode: Disable charger reset to allow device to boot while charging
-export DEBUG_DISABLE_CHARGER_RESET ?= 1
+export DEBUG_DISABLE_CHARGER_RESET ?= 0
 ifeq ($(DEBUG_DISABLE_CHARGER_RESET),1)
 KBUILD_CPPFLAGS += -DDEBUG_DISABLE_CHARGER_RESET
 endif
