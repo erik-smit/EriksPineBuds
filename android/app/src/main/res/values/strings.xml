@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenPineBuds</string>
+
+    <!-- Connection -->
+    <string name="scanning">Scanning for devices…</string>
+    <string name="connecting">Connecting…</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="scan_for_devices">Scan for Devices</string>
+    <string name="stop_scanning">Stop Scanning</string>
+
+    <!-- Configuration -->
+    <string name="left_earbud">Left Earbud</string>
+    <string name="right_earbud">Right Earbud</string>
+    <string name="single_tap">Single Tap</string>
+    <string name="double_tap">Double Tap</string>
+    <string name="triple_tap">Triple Tap</string>
+    <string name="long_press">Long Press</string>
+
+    <!-- Actions -->
+    <string name="apply_configuration">Apply Configuration</string>
+    <string name="reset_to_defaults">Reset to Defaults</string>
+    <string name="load_from_device">Load from Device</string>
+
+    <!-- Messages -->
+    <string name="ble_not_supported">Bluetooth LE is not supported on this device</string>
+    <string name="bluetooth_disabled">Bluetooth is disabled. Please enable it.</string>
+    <string name="permission_required">Location permission is required to scan for BLE devices</string>
+    <string name="config_applied">Configuration applied successfully</string>
+    <string name="config_failed">Failed to apply configuration</string>
+    <string name="device_not_found">OpenPineBuds not found</string>
+
+    <!-- Button Actions -->
+    <string name="action_none">None</string>
+    <string name="action_play_pause">Play/Pause</string>
+    <string name="action_next_track">Next Track</string>
+    <string name="action_previous_track">Previous Track</string>
+    <string name="action_volume_up">Volume Up</string>
+    <string name="action_volume_down">Volume Down</string>
+    <string name="action_toggle_anc">Toggle ANC</string>
+    <string name="action_voice_assistant">Voice Assistant</string>
+    <string name="action_answer_call">Answer Call</string>
+    <string name="action_reject_call">Reject Call</string>
+    <string name="action_end_call">End Call</string>
+    <string name="action_mute_mic">Mute Microphone</string>
+    <string name="action_transparency">Transparency Mode</string>
+    <string name="action_anc_off">ANC Off</string>
+</resources>

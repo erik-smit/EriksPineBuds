@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- Device Icon -->
+        <ImageView
+            android:id="@+id/iv_device_icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="Device icon"
+            android:src="@drawable/ic_launcher_foreground"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Device Name -->
+        <TextView
+            android:id="@+id/tv_device_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="8dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"
+            tools:text="OpenPineBuds"
+            app:layout_constraintEnd_toStartOf="@+id/tv_signal_strength"
+            app:layout_constraintStart_toEndOf="@+id/iv_device_icon"
+            app:layout_constraintTop_toTopOf="@+id/iv_device_icon" />
+
+        <!-- Device Address -->
+        <TextView
+            android:id="@+id/tv_device_address"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            tools:text="00:11:22:33:44:55"
+            app:layout_constraintEnd_toEndOf="@+id/tv_device_name"
+            app:layout_constraintStart_toStartOf="@+id/tv_device_name"
+            app:layout_constraintTop_toBottomOf="@+id/tv_device_name" />
+
+        <!-- RSSI -->
+        <TextView
+            android:id="@+id/tv_rssi"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textSize="11sp"
+            android:textColor="?android:attr/textColorTertiary"
+            tools:text="-65 dBm"
+            app:layout_constraintEnd_toEndOf="@+id/tv_device_address"
+            app:layout_constraintStart_toStartOf="@+id/tv_device_address"
+            app:layout_constraintTop_toBottomOf="@+id/tv_device_address" />
+
+        <!-- Signal Strength Indicator -->
+        <TextView
+            android:id="@+id/tv_signal_strength"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            tools:text="Good"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tv_device_name"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_device_icon" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
