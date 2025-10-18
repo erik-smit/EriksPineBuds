@@ -61,14 +61,34 @@ class BleManager(private val context: Context) {
      */
     @SuppressLint("MissingPermission")
     fun scanForDevices(): Flow<ScanResult> = callbackFlow {
-        if (bluetoothLeScanner == null) {
+        // Ensure scanner is initialized and BLE adapter is ready
+        val scanner = bluetoothLeScanner
+        if (scanner == null) {
+            Log.e(TAG, "Bluetooth LE scanner not available")
             close(IllegalStateException("Bluetooth LE scanner not available"))
             return@callbackFlow
         }
 
+        // Ensure adapter is enabled
+        if (bluetoothAdapter?.isEnabled != true) {
+            Log.e(TAG, "Bluetooth adapter is not enabled")
+            close(IllegalStateException("Bluetooth adapter is not enabled"))
+            return@callbackFlow
+        }
+
+        Log.d(TAG, "BLE scanner initialized, preparing scan...")
+
         val scanCallback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
+                Log.d(TAG, "onScanResult: ${result.device.address}, RSSI: ${result.rssi}")
                 trySend(result)
+            }
+
+            override fun onBatchScanResults(results: MutableList<ScanResult>?) {
+                Log.d(TAG, "onBatchScanResults: ${results?.size} results")
+                results?.forEach { result ->
+                    trySend(result)
+                }
             }
 
             override fun onScanFailed(errorCode: Int) {
@@ -84,14 +104,28 @@ class BleManager(private val context: Context) {
 
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+            .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+            .setReportDelay(0)  // Report immediately
             .build()
 
         Log.d(TAG, "Starting BLE scan for devices with service ${GattUuids.CONFIG_SERVICE}...")
-        bluetoothLeScanner?.startScan(listOf(scanFilter), scanSettings, scanCallback)
+
+        try {
+            scanner.startScan(listOf(scanFilter), scanSettings, scanCallback)
+            Log.d(TAG, "BLE scan started successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start scan", e)
+            close(e)
+        }
 
         awaitClose {
             Log.d(TAG, "Stopping BLE scan")
-            bluetoothLeScanner?.stopScan(scanCallback)
+            try {
+                scanner.stopScan(scanCallback)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error stopping scan", e)
+            }
         }
     }
 

@@ -67,6 +67,8 @@ class MainActivity : AppCompatActivity() {
         }
         binding.recyclerDevices.adapter = deviceAdapter
         binding.recyclerDevices.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        // Disable item animations to prevent distracting flicker on RSSI updates
+        binding.recyclerDevices.itemAnimator = null
 
         binding.btnScan.setOnClickListener {
             when (viewModel.uiState.value) {
@@ -168,8 +170,22 @@ class MainActivity : AppCompatActivity() {
                 // Update RecyclerView with devices
                 deviceAdapter.submitList(devices)
 
-                // Note: Visibility is controlled by updateUIForState based on UiState
-                // We only update the list content here, not visibility
+                // Update visibility when scanning - fixes race condition where UI state
+                // updates before devices are added
+                if (viewModel.uiState.value is UiState.Scanning || viewModel.uiState.value is UiState.ScanStopped) {
+                    val deviceCount = devices.size
+                    binding.tvStatus.text = if (deviceCount == 0) {
+                        if (viewModel.uiState.value is UiState.Scanning) {
+                            "Scanning for devices..."
+                        } else {
+                            "No devices found - Tap 'Scan for Devices' to retry"
+                        }
+                    } else {
+                        "Found $deviceCount device(s) - Tap to connect"
+                    }
+                    binding.tvDeviceListTitle.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
+                    binding.recyclerDevices.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
+                }
             }
         }
 
@@ -329,7 +345,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun startScanning() {
         android.util.Log.d("MainActivity", "Starting scan...")
-        viewModel.startScanning()
+        // Add small delay to ensure BLE is fully ready
+        binding.root.postDelayed({
+            viewModel.startScanning()
+        }, 300)
     }
 
     private fun showPermissionRationaleDialog() {
