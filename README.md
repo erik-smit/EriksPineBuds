@@ -43,6 +43,19 @@ Configure single tap, double tap, triple tap, and long press actions for each ea
 
 For detailed Android app instructions, see [android/README.md](android/README.md)
 
+### Known Issues / Current Limitations
+
+**BLE Configuration Service:**
+- A separate BLE device appears as "BES_ble" alongside the main "PineBuds Pro" device
+- The BES_ble device has **no pairing or security** - anyone can connect and modify touch control settings
+- The configuration service (UUID 0xFFC0) is only available on the BES_ble device, not the main audio device
+- This is a limitation of the current firmware architecture where BLE services are separate from Bluetooth Classic audio
+
+**Future improvements:**
+- Integrate BLE configuration service into main PineBuds Pro device
+- Add pairing/bonding security to prevent unauthorized configuration changes
+- Implement authentication or PIN-based protection for sensitive settings
+
 ## Usage
 
 To use this setup to build & flash your PineBuds you will need a system with docker setup at the minimum.
