@@ -104,12 +104,13 @@ const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM] = {
 // bt config
 // const char *BT_LOCAL_NAME = TO_STRING(BT_DEV_NAME) "\0";
 const char *BT_LOCAL_NAME = "PineBuds Pro";
-const char *BLE_DEFAULT_NAME = "PineBuds Pro BLE";
+const char *BLE_DEFAULT_NAME = "PineBuds Pro";  // Unified with Classic name
 uint8_t ble_addr[6] = {
 #ifdef BLE_DEV_ADDR
     BLE_DEV_ADDR
 #else
-    0xBE, 0x99, 0x34, 0x45,
+    // Unified with bt_addr for dual-mode compliance (BT 5.2 spec)
+    0x1e, 0x57, 0x34, 0x45,
     0x56, 0x67
 #endif
 };

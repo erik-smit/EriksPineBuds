@@ -34,6 +34,11 @@
 #include "stdbool.h"
 #include "string.h"
 
+#ifdef IBRT
+#include "app_tws_ibrt.h"
+#include "app_tws_ctrl_thread.h"
+#endif
+
 /************************private macro defination***************************/
 #define DEBUG_BLE_STATE_MACHINE true
 
@@ -398,18 +403,21 @@ static void ble_adv_config_param(uint8_t advType, uint16_t advInterval) {
                   BLE_ADV_DATA_STRUCT_HEADER_LEN;
   }
 
-  // Check if data can be added to the adv Data
-  if (avail_space > 2) {
-    avail_space = co_min(avail_space, bleModeEnv.bleEnv->dev_name_len);
-    advParam.advData[advParam.advDataLen++] = avail_space + 1;
-    // Fill Device Name Flag
-    advParam.advData[advParam.advDataLen++] =
-        (avail_space == bleModeEnv.bleEnv->dev_name_len) ? '\x08' : '\x09';
-    // Copy device name
-    memcpy(&advParam.advData[advParam.advDataLen], bleModeEnv.bleEnv->dev_name,
-           avail_space);
-    // Update adv Data Length
-    advParam.advDataLen += avail_space;
+  LOG_I("BLE ADV space: total=%d used=%d avail_before=%d name_len=%d",
+        advParam.withFlag ? BLE_ADV_DATA_WITH_FLAG_LEN : BLE_ADV_DATA_WITHOUT_FLAG_LEN,
+        advParam.advDataLen, avail_space, bleModeEnv.bleEnv->dev_name_len);
+
+  // FIXED: Put device name in SCAN RESPONSE instead of advertising data
+  // This avoids truncation when OPB Config service UUID (18 bytes) takes up ad space
+  uint32_t name_len = bleModeEnv.bleEnv->dev_name_len;
+  if (SCAN_RSP_DATA_LEN >= advParam.scanRspDataLen + name_len + BLE_ADV_DATA_STRUCT_HEADER_LEN) {
+    advParam.scanRspData[advParam.scanRspDataLen++] = name_len + 1;
+    advParam.scanRspData[advParam.scanRspDataLen++] = 0x09; // Complete name
+    memcpy(&advParam.scanRspData[advParam.scanRspDataLen], bleModeEnv.bleEnv->dev_name, name_len);
+    advParam.scanRspDataLen += name_len;
+    LOG_I("BLE SCAN_RSP: name='%s' len=%d", bleModeEnv.bleEnv->dev_name, name_len);
+  } else {
+    LOG_W("BLE: Not enough scan response space for full name");
   }
 }
 
@@ -434,6 +442,19 @@ static bool ble_adv_is_allowed(void) {
     LOG_I("SCO ongoing");
     allowed_adv = false;
   }
+
+#ifdef IBRT
+  // Only advertise BLE if we're the master OR if TWS is not connected (single bud mode)
+  extern bool app_tws_ibrt_tws_link_connected(void);
+  extern ibrt_ctrl_t* app_tws_ibrt_get_bt_ctrl_ctx(void);
+  if (app_tws_ibrt_tws_link_connected()) {
+    ibrt_ctrl_t *p_ibrt_ctrl = app_tws_ibrt_get_bt_ctrl_ctx();
+    if (p_ibrt_ctrl->current_role == IBRT_SLAVE) {
+      LOG_I("reason: slave in TWS mode");
+      allowed_adv = false;
+    }
+  }
+#endif
 
   if (false == allowed_adv) {
     app_ble_stop_activities();

@@ -86,7 +86,8 @@ int factory_section_open(void) {
     }
 
     memcpy(bt_addr, factory_section_p->data.bt_address, BTIF_BD_ADDR_SIZE);
-    memcpy(ble_addr, factory_section_p->data.ble_address, BTIF_BD_ADDR_SIZE);
+    // UNIFIED: Use same MAC for BLE as Classic BT (dual-mode BT 5.2 compliance)
+    memcpy(ble_addr, factory_section_p->data.bt_address, BTIF_BD_ADDR_SIZE);
     TRACE(2, "%s sucess btname:%s", __func__,
           factory_section_p->data.device_name);
   } else {
@@ -106,7 +107,8 @@ int factory_section_open(void) {
     }
 
     memcpy(bt_addr, factory_section_p->data.rev2_bt_addr, BTIF_BD_ADDR_SIZE);
-    memcpy(ble_addr, factory_section_p->data.rev2_ble_addr, BTIF_BD_ADDR_SIZE);
+    // UNIFIED: Use same MAC for BLE as Classic BT (dual-mode BT 5.2 compliance)
+    memcpy(ble_addr, factory_section_p->data.rev2_bt_addr, BTIF_BD_ADDR_SIZE);
     TRACE(2, "%s sucess btname:%s", __func__,
           (char *)factory_section_p->data.rev2_bt_name);
   }
@@ -141,15 +143,20 @@ uint8_t *factory_section_get_bt_name(void) {
 }
 
 uint8_t *factory_section_get_ble_name(void) {
-  if (factory_section_p) {
-    if (1 == nv_record_dev_rev) {
-      return (uint8_t *)BLE_DEFAULT_NAME;
-    } else {
-      return (uint8_t *)&(factory_section_p->data.rev2_ble_name);
-    }
-  } else {
-    return (uint8_t *)BLE_DEFAULT_NAME;
-  }
+  // TEMPORARY: Force use of BLE_DEFAULT_NAME to update NV flash with new unified name
+  // This ensures TWS/IBRT advertising uses "PineBuds Pro" instead of cached "PineBuds"
+  return (uint8_t *)BLE_DEFAULT_NAME;
+
+  // Original code (reads from factory section NV storage):
+  // if (factory_section_p) {
+  //   if (1 == nv_record_dev_rev) {
+  //     return (uint8_t *)BLE_DEFAULT_NAME;
+  //   } else {
+  //     return (uint8_t *)&(factory_section_p->data.rev2_ble_name);
+  //   }
+  // } else {
+  //   return (uint8_t *)BLE_DEFAULT_NAME;
+  // }
 }
 
 uint32_t factory_section_get_version(void) {

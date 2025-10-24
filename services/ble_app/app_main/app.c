@@ -413,7 +413,9 @@ void appm_init() {
   // Get the Device Name to add in the Advertising Data (Default one or NVDS
   // one)
 #ifdef _BLE_NVDS_
-  const char *ble_name_in_nv = nvrec_dev_get_ble_name();
+  // TEMPORARY: Force use of BLE_DEFAULT_NAME to update NV flash with new name
+  // const char *ble_name_in_nv = nvrec_dev_get_ble_name();
+  const char *ble_name_in_nv = BLE_DEFAULT_NAME;
 #else
   const char *ble_name_in_nv = BLE_DEFAULT_NAME;
 #endif
@@ -608,6 +610,15 @@ void gapm_update_ble_adv_data_right_before_started(uint8_t *pAdvData,
  */
 void appm_start_advertising(void *param) {
   BLE_APP_FUNC_ENTER();
+
+  // Only advertise BLE if we're the master OR if TWS is not connected (single bud mode)
+  // This prevents both earbuds from advertising when paired together
+  ibrt_ctrl_t *p_ibrt_ctrl = app_tws_ibrt_get_bt_ctrl_ctx();
+  if (app_tws_ibrt_tws_link_connected() &&
+      p_ibrt_ctrl->current_role == IBRT_SLAVE) {
+    LOG_I("BLE ADV: Slave in TWS mode - not advertising (standard stack)");
+    return;
+  }
 
   LOG_I("%s state: %d", __func__, ke_state_get(TASK_APP));
 

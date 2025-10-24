@@ -46,6 +46,7 @@
 #include "app_ibrt_customif_cmd.h"
 #include "app_ibrt_customif_ui.h"
 #include "app_ibrt_if.h"
+#include "app_ibrt_ble_adv.h"
 #endif
 
 #ifdef BLE_ENABLE
@@ -381,6 +382,16 @@ void app_tws_if_tws_connected_sync_info(void) {
 void app_tws_if_tws_connected_handler(void) {
   TRACE(1, "twsif_tws_connected, role %d",
         app_tws_ibrt_role_get_callback(NULL));
+
+  // Stop BLE advertising on slave when TWS connects
+  // Only master should advertise BLE in TWS mode
+  ibrt_ctrl_t *p_ibrt_ctrl = app_tws_ibrt_get_bt_ctrl_ctx();
+  if (p_ibrt_ctrl->current_role == IBRT_SLAVE) {
+    TRACE(0, "TWS connected: Slave stopping BLE advertising");
+    // Stop both BLE advertising code paths
+    appm_stop_advertising();        // Standard BLE stack (app.h)
+    app_ibrt_ble_adv_stop();        // IBRT BLE stack (app_ibrt_ble_adv.h)
+  }
 }
 
 void app_tws_if_tws_disconnected_handler(void) {

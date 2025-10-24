@@ -1,5 +1,6 @@
 #include "app_ibrt_ble_adv.h"
 #include "app_tws_ibrt.h"
+#include "app_tws_ctrl_thread.h"
 #include "cmsis_os.h"
 #include "co_bt_defines.h"
 #include "factory_section.h"
@@ -106,7 +107,9 @@ void app_ibrt_ble_adv_para_data_init(void) {
 
   adv_para_cfg->adv_data_len = 0;
   adv_para_cfg->adv_data[adv_para_cfg->adv_data_len++] = nameLen + 1;
-  adv_para_cfg->adv_data[adv_para_cfg->adv_data_len++] = 0x08;
+  // Use GAP_AD_TYPE_COMPLETE_NAME (0x09) instead of GAP_AD_TYPE_SHORTENED_NAME (0x08)
+  // to indicate this is the full device name and should not be truncated
+  adv_para_cfg->adv_data[adv_para_cfg->adv_data_len++] = 0x09;
   memcpy(&adv_para_cfg->adv_data[adv_para_cfg->adv_data_len], ble_name_in_nv,
          nameLen);
   adv_para_cfg->adv_data_len += nameLen;
@@ -184,6 +187,15 @@ void app_ibrt_ble_set_adv_data_handler(app_ble_adv_para_data_t *adv_data_cfg) {
 
 *****************************************************************************/
 void app_ibrt_ble_adv_start(uint8_t adv_type, uint16_t advInterval) {
+  // Only advertise BLE if we're the master OR if TWS is not connected (single bud mode)
+  // This prevents both earbuds from advertising when paired together
+  ibrt_ctrl_t *p_ibrt_ctrl = app_tws_ibrt_get_bt_ctrl_ctx();
+  if (app_tws_ibrt_tws_link_connected() &&
+      p_ibrt_ctrl->current_role == IBRT_SLAVE) {
+    TRACE(0, "BLE ADV: Slave in TWS mode - not advertising");
+    return;
+  }
+
   TRACE(2, "ble adv start with adv_type %d advIntervalms %dms", adv_type,
         advInterval);
   app_ble_adv_para_data_cfg.adv_type = adv_type;

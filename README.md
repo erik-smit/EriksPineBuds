@@ -56,13 +56,17 @@ For detailed Android app instructions, see [android/README.md](android/README.md
 ### Known Issues / Current Limitations
 
 **BLE Configuration Service:**
-- A separate BLE device appears as "BES_ble" alongside the main "PineBuds Pro" device
-- The BES_ble device has **no pairing or security** - anyone can connect and modify touch control settings
-- The configuration service (UUID 0xFFC0) is only available on the BES_ble device, not the main audio device
-- This is a limitation of the current firmware architecture where BLE services are separate from Bluetooth Classic audio
+- ~~A separate BLE device appears as "BES_ble" alongside the main "PineBuds Pro" device~~ **FIXED in latest commit**
+- The BLE configuration device has **no pairing or security** - anyone can connect and modify touch control settings
+- ~~The configuration service (UUID 0xFFC0) is only available on the BES_ble device, not the main audio device~~ **FIXED: Now unified as "PineBuds Pro"**
+
+**Recent Improvements (Latest Commit):**
+- ✅ **Unified Bluetooth device name**: Both Classic and BLE now advertise as "PineBuds Pro"
+- ✅ **Unified MAC address**: BES2300-YP is Bluetooth 5.2 dual-mode compliant - both stacks now use the same MAC address
+- ✅ **Single device pairing**: Earbuds now appear as a single device with both audio and configuration services
+- 📝 **Note**: If upgrading from older firmware, you may need to "Forget" the old BLE device on your phone
 
 **Future improvements:**
-- Integrate BLE configuration service into main PineBuds Pro device
 - Add pairing/bonding security to prevent unauthorized configuration changes
 - Implement authentication or PIN-based protection for sensitive settings
 
