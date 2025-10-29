@@ -10,6 +10,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.erikspinebuds.companion.databinding.ItemDeviceBinding
 
 /**
+ * Strip "LE-" prefix from BLE device names for display
+ * (Firmware adds "LE-" prefix to differentiate BLE from Classic BT on older Android versions)
+ */
+private fun String.stripLePrefix(): String {
+    return if (this.startsWith("LE-", ignoreCase = false)) {
+        this.substring(3)
+    } else {
+        this
+    }
+}
+
+/**
  * RecyclerView adapter for displaying discovered BLE devices
  */
 class DeviceAdapter(
@@ -39,7 +51,8 @@ class DeviceAdapter(
             val device = scanResult.device
 
             // Device name (or "Unknown Device" if null)
-            binding.tvDeviceName.text = device.name ?: "Unknown Device"
+            // Strip "LE-" prefix that firmware adds for BLE advertisement
+            binding.tvDeviceName.text = device.name?.stripLePrefix() ?: "Unknown Device"
 
             // Device address (MAC address)
             binding.tvDeviceAddress.text = device.address
