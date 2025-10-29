@@ -25,6 +25,7 @@
 // Include our config manager
 #include "app_opb_config.h"
 #include "opb_config_common.h"
+#include "nvrecord_env.h"
 
 #ifdef TWS_SYSTEM_ENABLED
 #include "app_tws_if.h"
@@ -81,6 +82,21 @@ static int gattc_read_req_ind_handler(ke_msg_id_t const msgid,
             value[2] = config.version_patch;
             value[3] = 0;  // reserved
             length = 4;
+        } else {
+            status = ATT_ERR_APP_ERROR;
+        }
+    }
+    else if (param->handle == (opb_configps_env->shdl + OPB_CONFIGPS_IDX_DEVICE_NAME_VAL)) {
+        // Read device name
+        char *device_name = NULL;
+        if (nv_record_get_device_name(&device_name) == 0) {
+            length = strlen(device_name);
+            if (length > 0) {
+                memcpy(value, device_name, length);
+            } else {
+                // Empty name = use factory default, return empty string
+                length = 0;
+            }
         } else {
             status = ATT_ERR_APP_ERROR;
         }
@@ -169,6 +185,31 @@ static int gattc_write_req_ind_handler(ke_msg_id_t const msgid,
                 }
             } else {
                 TRACE(2, "[OPB_CFG_TASK] Invalid length: %d, expected: %d", param->length, sizeof(opb_earbud_config_t));
+                status = ATT_ERR_INVALID_ATTRIBUTE_VAL_LEN;
+            }
+        }
+        else if (param->handle == (opb_configps_env->shdl + OPB_CONFIGPS_IDX_DEVICE_NAME_VAL)) {
+            // Write device name
+            TRACE(0, "[OPB_CFG_TASK] BLE write to device name characteristic");
+            if (param->length <= 32) {
+                char device_name[33];
+                memcpy(device_name, param->value, param->length);
+                device_name[param->length] = '\0';
+
+                // Save to NV storage
+                if (nv_record_set_device_name(device_name) != 0) {
+                    TRACE(0, "[OPB_CFG_TASK] Failed to save device name");
+                    status = ATT_ERR_APP_ERROR;
+                } else {
+                    TRACE(1, "[OPB_CFG_TASK] Device name saved: %s", device_name);
+#ifdef TWS_SYSTEM_ENABLED
+                    // Sync device name to peer earbud if TWS link is active
+                    TRACE(0, "[OPB_CFG_TASK] Triggering TWS sync for device name");
+                    app_tws_if_sync_info(TWS_SYNC_USER_OPB_CONFIG);
+#endif
+                }
+            } else {
+                TRACE(1, "[OPB_CFG_TASK] Device name too long: %d", param->length);
                 status = ATT_ERR_INVALID_ATTRIBUTE_VAL_LEN;
             }
         }

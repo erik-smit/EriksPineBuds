@@ -25,10 +25,10 @@
 
 // increase by 1 if the nvrecord's whole data structure is changed and the
 // content needs to be rebuilt
-#define NV_EXTENSION_MAJOR_VERSION 3
+#define NV_EXTENSION_MAJOR_VERSION 4
 // increase by 1 if the new items are appended to the tail of the former
 // nvrecord's data structure
-#define NV_EXTENSION_MINOR_VERSION 1
+#define NV_EXTENSION_MINOR_VERSION 0
 
 #define NV_EXTENSION_SIZE 4096 // one flash page
 #define NV_EXTENSION_PAGE_SIZE 256
@@ -151,6 +151,7 @@ struct nvrecord_env_t {
   uint8_t flag_value[8];
   AI_MANAGER_INFO_T aiManagerInfo;
   opb_config_t button_config;
+  char device_name[32]; // Device name override (empty = use factory default)
 };
 
 typedef struct btdevice_volume {

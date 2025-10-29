@@ -53,6 +53,11 @@
   { 0xFB, 0x34, 0x9B, 0x5F, 0x80, 0x00, 0x00, 0x80, \
     0x00, 0x10, 0x00, 0x00, 0xC3, 0xFF, 0x00, 0x00 }
 
+// Device Name UUID: 0000FFC4-0000-1000-8000-00805F9B34FB
+#define opb_config_device_name_char_uuid_128_content  \
+  { 0xFB, 0x34, 0x9B, 0x5F, 0x80, 0x00, 0x00, 0x80, \
+    0x00, 0x10, 0x00, 0x00, 0xC4, 0xFF, 0x00, 0x00 }
+
 #define ATT_DECL_PRIMARY_SERVICE_UUID  { 0x00, 0x28 }
 #define ATT_DECL_CHARACTERISTIC_UUID   { 0x03, 0x28 }
 
@@ -89,6 +94,15 @@ const struct attm_desc_128 opb_configps_att_db[OPB_CONFIGPS_IDX_NB] = {
         PERM(RD, ENABLE),
         PERM(RI, ENABLE) | PERM_VAL(UUID_LEN, PERM_UUID_128),
         4  // Version is 4 bytes
+    },
+
+    // Device Name Characteristic
+    [OPB_CONFIGPS_IDX_DEVICE_NAME_CHAR] = {ATT_DECL_CHARACTERISTIC_UUID, PERM(RD, ENABLE), 0, 0},
+    [OPB_CONFIGPS_IDX_DEVICE_NAME_VAL] = {
+        opb_config_device_name_char_uuid_128_content,
+        PERM(RD, ENABLE) | PERM(WRITE_REQ, ENABLE),
+        PERM(RI, ENABLE) | PERM_VAL(UUID_LEN, PERM_UUID_128),
+        32  // Max device name length
     },
 };
 

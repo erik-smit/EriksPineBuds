@@ -82,6 +82,13 @@ void BESHCI_SCO_Data_Start(void);
 void BESHCI_SCO_Data_Stop(void);
 void BESHCI_LockBuffer(void);
 void BESHCI_UNLockBuffer(void);
+
+// Factory section functions
+uint8_t *factory_section_get_bt_name(void);
+uint8_t *factory_section_get_ble_name(void);
+
+// NV record functions
+int nv_record_get_device_name(char **name);
 }
 #include "besbt.h"
 
@@ -203,6 +210,70 @@ void bt_set_ble_local_address(uint8_t *bleAddr) {
 
 unsigned char *bt_get_ble_local_address(void) { return ble_addr; }
 
+// Static buffers for device names
+static char bt_device_name_buffer[32];
+static char ble_device_name_buffer[32];
+static bool device_names_initialized = false;
+
+void bt_init_device_names(void) {
+  if (device_names_initialized) {
+    return;
+  }
+
+  // Try to get device name from NV storage (user override)
+  char *nv_device_name = NULL;
+  bool use_override = false;
+
+  if (nv_record_get_device_name(&nv_device_name) == 0 && nv_device_name != NULL) {
+    if (nv_device_name[0] != '\0') {
+      // Non-empty override found
+      use_override = true;
+      strncpy(bt_device_name_buffer, nv_device_name, sizeof(bt_device_name_buffer) - 1);
+      bt_device_name_buffer[sizeof(bt_device_name_buffer) - 1] = '\0';
+
+      // Use same name for BLE
+      strncpy(ble_device_name_buffer, nv_device_name, sizeof(ble_device_name_buffer) - 1);
+      ble_device_name_buffer[sizeof(ble_device_name_buffer) - 1] = '\0';
+
+      TRACE(1, "[BT_INIT] Using device name override: %s", bt_device_name_buffer);
+    }
+  }
+
+  if (!use_override) {
+    // No override, use factory sector names
+    uint8_t *factory_bt_name = factory_section_get_bt_name();
+    uint8_t *factory_ble_name = factory_section_get_ble_name();
+
+    if (factory_bt_name != NULL && factory_bt_name[0] != '\0') {
+      strncpy(bt_device_name_buffer, (const char *)factory_bt_name, sizeof(bt_device_name_buffer) - 1);
+      bt_device_name_buffer[sizeof(bt_device_name_buffer) - 1] = '\0';
+      TRACE(1, "[BT_INIT] Using factory BT name: %s", bt_device_name_buffer);
+    } else {
+      // Fallback to default
+      strncpy(bt_device_name_buffer, "PineBuds Pro", sizeof(bt_device_name_buffer) - 1);
+      bt_device_name_buffer[sizeof(bt_device_name_buffer) - 1] = '\0';
+      TRACE(0, "[BT_INIT] Using default BT name");
+    }
+
+    if (factory_ble_name != NULL && factory_ble_name[0] != '\0') {
+      strncpy(ble_device_name_buffer, (const char *)factory_ble_name, sizeof(ble_device_name_buffer) - 1);
+      ble_device_name_buffer[sizeof(ble_device_name_buffer) - 1] = '\0';
+      TRACE(1, "[BT_INIT] Using factory BLE name: %s", ble_device_name_buffer);
+    } else {
+      // Fallback to same as BT name
+      strncpy(ble_device_name_buffer, bt_device_name_buffer, sizeof(ble_device_name_buffer) - 1);
+      ble_device_name_buffer[sizeof(ble_device_name_buffer) - 1] = '\0';
+      TRACE(0, "[BT_INIT] Using default BLE name (same as BT)");
+    }
+  }
+
+  // Set the names
+  BT_LOCAL_NAME = bt_device_name_buffer;
+  BLE_DEFAULT_NAME = ble_device_name_buffer;
+
+  device_names_initialized = true;
+}
+
 const char *bt_get_local_name(void) { return BT_LOCAL_NAME; }
 
 void bt_set_local_name(const char *name) {
@@ -268,9 +339,23 @@ static void __set_local_dev_name(void) {
   devinfo.localname = bt_get_local_name();
   devinfo.ble_name = bt_get_ble_local_name();
 
+  // Save our custom device name before nvrec_dev_localname_addr_init overwrites it
+  const char *custom_bt_name = bt_get_local_name();
+
+  // This loads factory sector data and overwrites devinfo.localname
   nvrec_dev_localname_addr_init(&devinfo);
-  bt_set_local_dev_name((const unsigned char *)devinfo.localname,
-                        strlen(devinfo.localname) + 1);
+
+  // Restore our custom name instead of using factory sector
+  // First update the global pointer
+  bt_set_local_name(custom_bt_name);
+
+  // Then set it in the BT stack
+  bt_set_local_dev_name((const unsigned char *)custom_bt_name,
+                        strlen(custom_bt_name) + 1);
+
+  // Update the BT name in the EIR data (for pairing)
+  btif_update_bt_name((const unsigned char *)custom_bt_name,
+                      strlen(custom_bt_name) + 1);
 }
 #endif
 
@@ -310,17 +395,32 @@ void app_notify_stack_ready(uint8_t ready_flag);
 static void stack_ready_callback(int status) {
   dev_addr_name devinfo;
 
+  // Save our custom device names before nvrec_dev_localname_addr_init overwrites them
+  const char *custom_bt_name = bt_get_local_name();
+  const char *custom_ble_name = bt_get_ble_local_name();
+
   devinfo.btd_addr = bt_get_local_address();
   devinfo.ble_addr = bt_get_ble_local_address();
   devinfo.localname = bt_get_local_name();
   devinfo.ble_name = bt_get_ble_local_name();
 
+  // This will overwrite devinfo with factory sector data (including name)
   nvrec_dev_localname_addr_init(&devinfo);
-  bt_set_local_dev_name((const unsigned char *)devinfo.localname,
-                        strlen(devinfo.localname) + 1);
 
-  bt_stack_config((const unsigned char *)devinfo.localname,
-                  strlen(devinfo.localname) + 1);
+  // Restore our custom names instead of using factory sector
+  // First update the global pointer
+  bt_set_local_name(custom_bt_name);
+
+  // Then set it in the BT stack
+  bt_set_local_dev_name((const unsigned char *)custom_bt_name,
+                        strlen(custom_bt_name) + 1);
+
+  // Update the BT name in the EIR data (for pairing)
+  btif_update_bt_name((const unsigned char *)custom_bt_name,
+                      strlen(custom_bt_name) + 1);
+
+  bt_stack_config((const unsigned char *)custom_bt_name,
+                  strlen(custom_bt_name) + 1);
 
   app_notify_stack_ready(STACK_READY_BT);
 }

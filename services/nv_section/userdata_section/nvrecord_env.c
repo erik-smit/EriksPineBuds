@@ -47,6 +47,9 @@ void nvrecord_rebuild_system_env(struct nvrecord_env_t *pSystemEnv) {
   pSystemEnv->button_config.version_patch = OPB_CONFIG_VERSION_PATCH;
   pSystemEnv->button_config.reserved = 0;
 
+  // Initialize device name to empty (will use factory default)
+  memset(pSystemEnv->device_name, 0, sizeof(pSystemEnv->device_name));
+
   localSystemInfo = *pSystemEnv;
 }
 
@@ -137,6 +140,37 @@ int nv_record_set_button_config(const opb_config_t *config) {
     return -1;
 
   env->button_config = *config;
+  return nv_record_env_set(env);
+}
+
+// Get device name from NV storage
+int nv_record_get_device_name(char **name) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!name)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  *name = env->device_name;
+  return 0;
+}
+
+// Set device name and mark for save
+int nv_record_set_device_name(const char *name) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!name)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  // Copy name with truncation if too long
+  strncpy(env->device_name, name, sizeof(env->device_name) - 1);
+  env->device_name[sizeof(env->device_name) - 1] = '\0';
+
   return nv_record_env_set(env);
 }
 

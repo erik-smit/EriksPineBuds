@@ -43,6 +43,7 @@ unsigned char *bt_get_ble_local_address(void);
 const char *bt_get_local_name(void);
 void bt_set_local_name(const char* name);
 const char *bt_get_ble_local_name(void);
+void bt_init_device_names(void);
 void gen_bt_addr_for_debug(void);
 void bt_set_ble_local_address(uint8_t* bleAddr);
 

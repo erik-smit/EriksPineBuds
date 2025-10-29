@@ -2138,9 +2138,20 @@ int app_init(void) {
   app_ibrt_reconfig_btAddr_from_nv();
 #endif
 
+  // Initialize device names BEFORE BT/BLE stack starts
+  extern void bt_init_device_names(void);
+  bt_init_device_names();
+
   if (pwron_case != APP_POWERON_CASE_TEST) {
     BesbtInit();
     app_wait_stack_ready();
+
+    // Explicitly update BT Classic name after stack is ready
+    extern const char *bt_get_local_name(void);
+    extern int bt_set_local_dev_name(const unsigned char *dev_name, uint8_t len);
+    const char *bt_name = bt_get_local_name();
+    bt_set_local_dev_name((const unsigned char *)bt_name, strlen(bt_name) + 1);
+
     bt_drv_extra_config_after_init();
     bt_generate_ecdh_key_pair();
     app_bt_start_custom_function_in_bt_thread((uint32_t)0, 0,

@@ -153,13 +153,28 @@ static bool validate_config(const opb_config_t *config) {
 }
 
 #ifdef TWS_SYSTEM_ENABLED
-// TWS sync prepare handler - serialize config to send to peer earbud
+// TWS sync prepare handler - serialize config and device name to send to peer earbud
 static void opb_config_tws_sync_info_prepare_handler(uint8_t *buf, uint16_t *len) {
     TRACE(0, "[OPB_CFG_TWS] Preparing config to sync to peer");
 
-    // Copy the entire config structure
-    memcpy(buf, &current_config, sizeof(opb_config_t));
-    *len = sizeof(opb_config_t);
+    opb_tws_sync_data_t sync_data;
+
+    // Copy button config
+    memcpy(&sync_data.config, &current_config, sizeof(opb_config_t));
+
+    // Copy device name from NV storage
+    char *nv_device_name = NULL;
+    if (nv_record_get_device_name(&nv_device_name) == 0 && nv_device_name != NULL) {
+        strncpy(sync_data.device_name, nv_device_name, sizeof(sync_data.device_name) - 1);
+        sync_data.device_name[sizeof(sync_data.device_name) - 1] = '\0';
+    } else {
+        // If we can't get device name, send empty string
+        sync_data.device_name[0] = '\0';
+    }
+
+    // Copy to output buffer
+    memcpy(buf, &sync_data, sizeof(opb_tws_sync_data_t));
+    *len = sizeof(opb_tws_sync_data_t);
 
     TRACE(4, "[OPB_CFG_TWS] Prepared: Left ST=%d DT=%d TT=%d LP=%d",
           current_config.left.single_tap,
@@ -171,36 +186,49 @@ static void opb_config_tws_sync_info_prepare_handler(uint8_t *buf, uint16_t *len
           current_config.right.double_tap,
           current_config.right.triple_tap,
           current_config.right.long_press);
+    TRACE(1, "[OPB_CFG_TWS] Prepared: Device name='%s'", sync_data.device_name);
 }
 
-// TWS sync received handler - deserialize and apply config from peer earbud
+// TWS sync received handler - deserialize and apply config and device name from peer earbud
 static void opb_config_tws_sync_info_received_handler(uint8_t *buf, uint16_t len) {
     TRACE(2, "[OPB_CFG_TWS] Received config from peer, len=%d", len);
 
-    if (len != sizeof(opb_config_t)) {
+    if (len != sizeof(opb_tws_sync_data_t)) {
         TRACE(2, "[OPB_CFG_TWS] ERROR: Invalid length %d, expected %d",
-              len, sizeof(opb_config_t));
+              len, sizeof(opb_tws_sync_data_t));
         return;
     }
 
-    opb_config_t *received_config = (opb_config_t *)buf;
+    opb_tws_sync_data_t *sync_data = (opb_tws_sync_data_t *)buf;
 
     TRACE(4, "[OPB_CFG_TWS] Received: Left ST=%d DT=%d TT=%d LP=%d",
-          received_config->left.single_tap,
-          received_config->left.double_tap,
-          received_config->left.triple_tap,
-          received_config->left.long_press);
+          sync_data->config.left.single_tap,
+          sync_data->config.left.double_tap,
+          sync_data->config.left.triple_tap,
+          sync_data->config.left.long_press);
     TRACE(4, "[OPB_CFG_TWS] Received: Right ST=%d DT=%d TT=%d LP=%d",
-          received_config->right.single_tap,
-          received_config->right.double_tap,
-          received_config->right.triple_tap,
-          received_config->right.long_press);
+          sync_data->config.right.single_tap,
+          sync_data->config.right.double_tap,
+          sync_data->config.right.triple_tap,
+          sync_data->config.right.long_press);
+    TRACE(1, "[OPB_CFG_TWS] Received: Device name='%s'", sync_data->device_name);
 
-    // Apply the received config (save to both RAM and NV)
-    if (app_opb_config_set(received_config, true) == 0) {
-        TRACE(0, "[OPB_CFG_TWS] Config applied successfully from peer");
+    // Apply the received button config (save to both RAM and NV)
+    if (app_opb_config_set(&sync_data->config, true) == 0) {
+        TRACE(0, "[OPB_CFG_TWS] Button config applied successfully from peer");
     } else {
-        TRACE(0, "[OPB_CFG_TWS] ERROR: Failed to apply config from peer");
+        TRACE(0, "[OPB_CFG_TWS] ERROR: Failed to apply button config from peer");
+    }
+
+    // Apply the received device name (save to NV)
+    if (nv_record_set_device_name(sync_data->device_name) == 0) {
+        TRACE(0, "[OPB_CFG_TWS] Device name applied successfully from peer");
+
+        // Update BT/BLE device names immediately
+        extern void bt_init_device_names(void);
+        bt_init_device_names();
+    } else {
+        TRACE(0, "[OPB_CFG_TWS] ERROR: Failed to apply device name from peer");
     }
 }
 

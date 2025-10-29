@@ -46,6 +46,12 @@ typedef struct {
     uint8_t reserved;
 } opb_config_t;
 
+// TWS sync data structure (includes both button config and device name)
+typedef struct {
+    opb_config_t config;
+    char device_name[32];
+} opb_tws_sync_data_t;
+
 // Default configuration for left earbud
 #define OPB_CONFIG_DEFAULT_LEFT_INIT { \
     .single_tap = OPB_ACTION_PLAY_PAUSE, \
