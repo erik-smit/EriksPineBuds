@@ -231,11 +231,11 @@ void bt_init_device_names(void) {
       strncpy(bt_device_name_buffer, nv_device_name, sizeof(bt_device_name_buffer) - 1);
       bt_device_name_buffer[sizeof(bt_device_name_buffer) - 1] = '\0';
 
-      // Use same name for BLE
-      strncpy(ble_device_name_buffer, nv_device_name, sizeof(ble_device_name_buffer) - 1);
-      ble_device_name_buffer[sizeof(ble_device_name_buffer) - 1] = '\0';
+      // Add "LE-" prefix for BLE to differentiate on older Android devices
+      snprintf(ble_device_name_buffer, sizeof(ble_device_name_buffer), "LE-%s", nv_device_name);
 
-      TRACE(1, "[BT_INIT] Using device name override: %s", bt_device_name_buffer);
+      TRACE(1, "[BT_INIT] Using device name override: BT='%s', BLE='%s'",
+            bt_device_name_buffer, ble_device_name_buffer);
     }
   }
 
@@ -260,10 +260,9 @@ void bt_init_device_names(void) {
       ble_device_name_buffer[sizeof(ble_device_name_buffer) - 1] = '\0';
       TRACE(1, "[BT_INIT] Using factory BLE name: %s", ble_device_name_buffer);
     } else {
-      // Fallback to same as BT name
-      strncpy(ble_device_name_buffer, bt_device_name_buffer, sizeof(ble_device_name_buffer) - 1);
-      ble_device_name_buffer[sizeof(ble_device_name_buffer) - 1] = '\0';
-      TRACE(0, "[BT_INIT] Using default BLE name (same as BT)");
+      // Fallback to BT name with "LE-" prefix
+      snprintf(ble_device_name_buffer, sizeof(ble_device_name_buffer), "LE-%s", bt_device_name_buffer);
+      TRACE(1, "[BT_INIT] Using default BLE name with LE- prefix: %s", ble_device_name_buffer);
     }
   }
 
@@ -395,9 +394,8 @@ void app_notify_stack_ready(uint8_t ready_flag);
 static void stack_ready_callback(int status) {
   dev_addr_name devinfo;
 
-  // Save our custom device names before nvrec_dev_localname_addr_init overwrites them
+  // Save our custom device name before nvrec_dev_localname_addr_init overwrites it
   const char *custom_bt_name = bt_get_local_name();
-  const char *custom_ble_name = bt_get_ble_local_name();
 
   devinfo.btd_addr = bt_get_local_address();
   devinfo.ble_addr = bt_get_ble_local_address();
