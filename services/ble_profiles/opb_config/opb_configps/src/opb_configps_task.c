@@ -89,8 +89,9 @@ static int gattc_read_req_ind_handler(ke_msg_id_t const msgid,
     else if (param->handle == (opb_configps_env->shdl + OPB_CONFIGPS_IDX_DEVICE_NAME_VAL)) {
         // Read device name
         char *device_name = NULL;
-        if (nv_record_get_device_name(&device_name) == 0) {
-            length = strlen(device_name);
+        if (nv_record_get_device_name(&device_name) == 0 && device_name != NULL) {
+            // Use strnlen to safely get length (max 32 bytes)
+            length = strnlen(device_name, 32);
             if (length > 0) {
                 memcpy(value, device_name, length);
             } else {
@@ -98,7 +99,8 @@ static int gattc_read_req_ind_handler(ke_msg_id_t const msgid,
                 length = 0;
             }
         } else {
-            status = ATT_ERR_APP_ERROR;
+            // Error getting device name, return empty string
+            length = 0;
         }
     }
     else {

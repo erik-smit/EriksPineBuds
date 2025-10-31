@@ -28,7 +28,7 @@
  * DEFINES
  ****************************************************************************************
  */
-#define OPB_CONFIGPS_MAX_LEN  (16)
+#define OPB_CONFIGPS_MAX_LEN  (32)  // Increased to accommodate device name (32 bytes max)
 #define OPB_CONFIGPS_IDX_MAX  (0x01)
 
 /*
