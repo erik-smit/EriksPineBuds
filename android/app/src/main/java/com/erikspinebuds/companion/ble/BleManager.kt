@@ -47,6 +47,7 @@ class BleManager(private val context: Context) {
     private var leftConfigChar: BluetoothGattCharacteristic? = null
     private var rightConfigChar: BluetoothGattCharacteristic? = null
     private var versionChar: BluetoothGattCharacteristic? = null
+    private var deviceNameChar: BluetoothGattCharacteristic? = null
 
     /**
      * Check if Bluetooth is enabled
@@ -178,8 +179,9 @@ class BleManager(private val context: Context) {
                         leftConfigChar = configService.getCharacteristic(GattUuids.LEFT_EARBUD_CONFIG)
                         rightConfigChar = configService.getCharacteristic(GattUuids.RIGHT_EARBUD_CONFIG)
                         versionChar = configService.getCharacteristic(GattUuids.CONFIG_VERSION)
+                        deviceNameChar = configService.getCharacteristic(GattUuids.DEVICE_NAME)
 
-                        Log.d(TAG, "Characteristics - Left: ${leftConfigChar != null}, Right: ${rightConfigChar != null}, Version: ${versionChar != null}")
+                        Log.d(TAG, "Characteristics - Left: ${leftConfigChar != null}, Right: ${rightConfigChar != null}, Version: ${versionChar != null}, DeviceName: ${deviceNameChar != null}")
 
                         _connectionState.value = ConnectionState.READY
                         trySend(BleEvent.ServicesDiscovered)
@@ -258,6 +260,15 @@ class BleManager(private val context: Context) {
     }
 
     /**
+     * Read device name
+     */
+    @SuppressLint("MissingPermission")
+    fun readDeviceName(): Boolean {
+        val char = deviceNameChar ?: return false
+        return bluetoothGatt?.readCharacteristic(char) == true
+    }
+
+    /**
      * Write left earbud configuration
      */
     @SuppressLint("MissingPermission")
@@ -275,6 +286,17 @@ class BleManager(private val context: Context) {
     fun writeRightConfig(data: ByteArray): Boolean {
         val char = rightConfigChar ?: return false
         char.value = data
+        char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        return bluetoothGatt?.writeCharacteristic(char) == true
+    }
+
+    /**
+     * Write device name
+     */
+    @SuppressLint("MissingPermission")
+    fun writeDeviceName(name: String): Boolean {
+        val char = deviceNameChar ?: return false
+        char.value = name.toByteArray(Charsets.UTF_8)
         char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         return bluetoothGatt?.writeCharacteristic(char) == true
     }
@@ -298,6 +320,7 @@ class BleManager(private val context: Context) {
         leftConfigChar = null
         rightConfigChar = null
         versionChar = null
+        deviceNameChar = null
     }
 }
 

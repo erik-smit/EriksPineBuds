@@ -56,7 +56,10 @@ class MainActivity : AppCompatActivity() {
 
         setupUI()
         observeViewModel()
-        checkPermissionsAndStart()
+        // Only auto-start scanning on first launch (not on rotation)
+        if (savedInstanceState == null) {
+            checkPermissionsAndStart()
+        }
     }
 
     private fun setupUI() {
@@ -89,6 +92,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnSave.setOnClickListener {
+            // Save device name first if changed
+            saveDeviceNameIfChanged()
+            // Then save earbud configurations
             viewModel.saveConfiguration()
         }
 
@@ -96,8 +102,39 @@ class MainActivity : AppCompatActivity() {
             viewModel.loadConfiguration()
         }
 
+        // Save device name when "Done" is pressed on keyboard
+        binding.etDeviceName.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+                saveDeviceNameIfChanged()
+                // Hide keyboard
+                val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(binding.etDeviceName.windowToken, 0)
+                // Clear focus
+                binding.etDeviceName.clearFocus()
+                true
+            } else {
+                false
+            }
+        }
+
+        // Auto-save device name when focus is lost
+        binding.etDeviceName.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                saveDeviceNameIfChanged()
+            }
+        }
+
         // Make config cards clickable to edit
         setupConfigCardClickListeners()
+    }
+
+    private fun saveDeviceNameIfChanged() {
+        val currentName = binding.etDeviceName.text.toString().trim()
+        val storedName = viewModel.deviceName.value
+        if (currentName != storedName && currentName.isNotEmpty() && currentName.length <= 32) {
+            viewModel.saveDeviceName(currentName)
+            Toast.makeText(this, "Saving device name...", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun setupConfigCardClickListeners() {
@@ -226,6 +263,15 @@ class MainActivity : AppCompatActivity() {
                 binding.tvVersion.text = version?.let { "Firmware: $it" } ?: ""
             }
         }
+
+        lifecycleScope.launch {
+            viewModel.deviceName.collect { name ->
+                // Update EditText only if different to avoid cursor jumping
+                if (binding.etDeviceName.text.toString() != name) {
+                    binding.etDeviceName.setText(name)
+                }
+            }
+        }
     }
 
     private fun updateUIForState(state: UiState) {
@@ -248,6 +294,7 @@ class MainActivity : AppCompatActivity() {
                 binding.tvDeviceListTitle.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
                 binding.recyclerDevices.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
                 binding.tvConfigTitle.visibility = android.view.View.GONE
+                binding.cardDeviceName.visibility = android.view.View.GONE
                 binding.cardLeft.visibility = android.view.View.GONE
                 binding.cardRight.visibility = android.view.View.GONE
                 binding.btnReload.visibility = android.view.View.GONE
@@ -270,6 +317,7 @@ class MainActivity : AppCompatActivity() {
                 binding.tvDeviceListTitle.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
                 binding.recyclerDevices.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
                 binding.tvConfigTitle.visibility = android.view.View.GONE
+                binding.cardDeviceName.visibility = android.view.View.GONE
                 binding.cardLeft.visibility = android.view.View.GONE
                 binding.cardRight.visibility = android.view.View.GONE
                 binding.btnReload.visibility = android.view.View.GONE
@@ -283,9 +331,10 @@ class MainActivity : AppCompatActivity() {
                 binding.btnDisconnect.isEnabled = false
                 binding.btnSave.isEnabled = false
                 binding.btnReload.isEnabled = false
-                // Hide device list while connecting
+                // Hide device list and config while connecting
                 binding.tvDeviceListTitle.visibility = android.view.View.GONE
                 binding.recyclerDevices.visibility = android.view.View.GONE
+                binding.cardDeviceName.visibility = android.view.View.GONE
             }
             is UiState.Connected -> {
                 binding.tvStatus.text = "Connected - Configuration loaded"
@@ -298,6 +347,7 @@ class MainActivity : AppCompatActivity() {
                 // Hide device list, show config
                 binding.tvDeviceListTitle.visibility = android.view.View.GONE
                 binding.recyclerDevices.visibility = android.view.View.GONE
+                binding.cardDeviceName.visibility = android.view.View.VISIBLE
                 binding.tvConfigTitle.visibility = android.view.View.VISIBLE
                 binding.cardLeft.visibility = android.view.View.VISIBLE
                 binding.cardRight.visibility = android.view.View.VISIBLE
@@ -311,6 +361,19 @@ class MainActivity : AppCompatActivity() {
             is UiState.Disconnected -> {
                 binding.tvStatus.text = "Disconnected"
                 Toast.makeText(this, "Disconnected from device", Toast.LENGTH_SHORT).show()
+                // Enable scan button, disable disconnect button
+                binding.btnScan.isEnabled = true
+                binding.btnScan.text = "Scan for Devices"
+                binding.btnDisconnect.isEnabled = false
+                binding.btnSave.isEnabled = false
+                binding.btnReload.isEnabled = false
+                // Hide config UI when disconnected
+                binding.cardDeviceName.visibility = android.view.View.GONE
+                binding.tvConfigTitle.visibility = android.view.View.GONE
+                binding.cardLeft.visibility = android.view.View.GONE
+                binding.cardRight.visibility = android.view.View.GONE
+                binding.btnReload.visibility = android.view.View.GONE
+                binding.btnSave.visibility = android.view.View.GONE
             }
             is UiState.Error -> {
                 binding.tvStatus.text = "Error: ${state.message}"

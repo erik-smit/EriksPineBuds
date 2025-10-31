@@ -53,6 +53,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _firmwareVersion = MutableStateFlow<String?>(null)
     val firmwareVersion: StateFlow<String?> = _firmwareVersion.asStateFlow()
 
+    // Device name
+    private val _deviceName = MutableStateFlow<String>("")
+    val deviceName: StateFlow<String> = _deviceName.asStateFlow()
+
     /**
      * Start scanning for devices
      */
@@ -92,6 +96,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Scan cancelled (e.g., when connecting to device) - this is expected, not an error
+                Log.d(TAG, "Scan cancelled")
             } catch (e: Exception) {
                 Log.e(TAG, "Scan error", e)
                 _uiState.value = UiState.Error("Scan failed: ${e.message}")
@@ -205,6 +212,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     Log.d(TAG, "Firmware version: ${_firmwareVersion.value}")
                 }
             }
+            GattUuids.DEVICE_NAME -> {
+                try {
+                    val name = String(event.data, Charsets.UTF_8)
+                    _deviceName.value = name
+                    Log.d(TAG, "Device name loaded: $name")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to parse device name", e)
+                }
+            }
         }
     }
 
@@ -216,10 +232,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Log.d(TAG, "Loading configuration...")
             // BLE reads must be sequential - wait between each read
             bleManager.readLeftConfig()
-            kotlinx.coroutines.delay(100)
+            kotlinx.coroutines.delay(200)
             bleManager.readRightConfig()
-            kotlinx.coroutines.delay(100)
+            kotlinx.coroutines.delay(200)
             bleManager.readVersion()
+            kotlinx.coroutines.delay(200)
+            bleManager.readDeviceName()
         }
     }
 
@@ -276,6 +294,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.value = UiState.Error("Failed to save configuration")
             }
             // Otherwise, we'll wait for the write callbacks (handled in handleBleEvent)
+        }
+    }
+
+    /**
+     * Save device name to device
+     */
+    fun saveDeviceName(name: String) {
+        viewModelScope.launch {
+            Log.d(TAG, "Saving device name: $name")
+            val success = bleManager.writeDeviceName(name)
+            if (!success) {
+                Log.e(TAG, "Failed to initiate device name write")
+                _uiState.value = UiState.Error("Failed to save device name")
+            }
+            // Success will be handled by onWriteComplete through BLE event
         }
     }
 
