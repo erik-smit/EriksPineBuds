@@ -3,6 +3,7 @@ cur_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)datapath/datapathps/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)opb_config/opb_configps/src/*.c))
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)opb_eq/opb_eqps/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)hrp/hrps/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)hogp/hogpbh/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)hogp/hogpd/src/*.c))
@@ -81,7 +82,11 @@ subdir-ccflags-y += \
 	-Iservices/ble_profiles/opb_config/opb_configps/api/ \
 	-Iservices/ble_profiles/opb_config/opb_configps/src/ \
 	-Iservices/ble_profiles/opb_config/ \
+	-Iservices/ble_profiles/opb_eq/opb_eqps/api/ \
+	-Iservices/ble_profiles/opb_eq/opb_eqps/src/ \
+	-Iservices/ble_profiles/opb_eq/ \
 	-Iservices/app_opb_config/ \
+	-Iservices/app_opb_eq/ \
 	-Iservices/ble_app/app_main/ \
 	-Iservices/ble_app/app_voice \
 	-Iservices/ble_app/app_htp/ \

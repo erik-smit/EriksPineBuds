@@ -43,6 +43,15 @@ int nv_record_set_button_config(const opb_config_t *config);
 int nv_record_get_device_name(char **name);
 int nv_record_set_device_name(const char *name);
 
+int nv_record_get_eq_config(opb_eq_config_t **config);
+int nv_record_set_eq_config(const opb_eq_config_t *config);
+
+int nv_record_get_eq_enabled(bool **enabled);
+int nv_record_set_eq_enabled(const bool *enabled);
+
+int nv_record_get_eq_preset(opb_eq_preset_t **preset);
+int nv_record_set_eq_preset(const opb_eq_preset_t *preset);
+
 #ifdef __cplusplus
 }
 #endif

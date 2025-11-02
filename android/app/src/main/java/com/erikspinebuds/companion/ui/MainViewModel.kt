@@ -57,6 +57,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _deviceName = MutableStateFlow<String>("")
     val deviceName: StateFlow<String> = _deviceName.asStateFlow()
 
+    // EQ state
+    private val _eqPreset = MutableStateFlow<com.erikspinebuds.companion.ble.EqPreset>(com.erikspinebuds.companion.ble.EqPreset.FLAT)
+    val eqPreset: StateFlow<com.erikspinebuds.companion.ble.EqPreset> = _eqPreset.asStateFlow()
+
+    private val _eqEnabled = MutableStateFlow<Boolean>(false)
+    val eqEnabled: StateFlow<Boolean> = _eqEnabled.asStateFlow()
+
+    private val _eqAvailable = MutableStateFlow<Boolean>(false)
+    val eqAvailable: StateFlow<Boolean> = _eqAvailable.asStateFlow()
+
     /**
      * Start scanning for devices
      */
@@ -154,6 +164,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             is BleEvent.ServicesDiscovered -> {
                 Log.d(TAG, "Services discovered, loading configuration...")
+                // Check if EQ service is available
+                _eqAvailable.value = bleManager.isEqAvailable()
+                Log.d(TAG, "EQ service available: ${_eqAvailable.value}")
                 Log.d(TAG, "Setting UI state to Connected")
                 _uiState.value = UiState.Connected
                 Log.d(TAG, "UI state is now: ${_uiState.value}")
@@ -168,6 +181,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             is BleEvent.Disconnected -> {
                 Log.d(TAG, "BLE disconnected")
+                // Reset EQ state on disconnect
+                _eqAvailable.value = false
+                _eqEnabled.value = false
+                _eqPreset.value = com.erikspinebuds.companion.ble.EqPreset.FLAT
                 _uiState.value = UiState.Disconnected
             }
             is BleEvent.Error -> {
@@ -221,6 +238,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     Log.e(TAG, "Failed to parse device name", e)
                 }
             }
+            GattUuids.EQ_PRESET -> {
+                try {
+                    if (event.data.size >= 4) {
+                        // Parse little-endian uint32
+                        val value = (event.data[0].toInt() and 0xFF) or
+                                    ((event.data[1].toInt() and 0xFF) shl 8) or
+                                    ((event.data[2].toInt() and 0xFF) shl 16) or
+                                    ((event.data[3].toInt() and 0xFF) shl 24)
+                        val preset = com.erikspinebuds.companion.ble.EqPreset.fromValue(value)
+                        if (preset != null) {
+                            _eqPreset.value = preset
+                            Log.d(TAG, "EQ preset loaded: ${preset.displayName}")
+                        } else {
+                            Log.e(TAG, "Unknown EQ preset value: $value")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to parse EQ preset", e)
+                }
+            }
+            GattUuids.EQ_ENABLE -> {
+                try {
+                    if (event.data.isNotEmpty()) {
+                        val enabled = event.data[0] != 0.toByte()
+                        _eqEnabled.value = enabled
+                        Log.d(TAG, "EQ enabled state loaded: $enabled")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to parse EQ enabled state", e)
+                }
+            }
         }
     }
 
@@ -238,6 +286,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             bleManager.readVersion()
             kotlinx.coroutines.delay(200)
             bleManager.readDeviceName()
+
+            // Load EQ state if available
+            if (_eqAvailable.value) {
+                kotlinx.coroutines.delay(200)
+                bleManager.readEqPreset()
+                kotlinx.coroutines.delay(200)
+                bleManager.readEqEnabled()
+            }
         }
     }
 
@@ -313,6 +369,64 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Set EQ preset
+     */
+    fun setEqPreset(preset: com.erikspinebuds.companion.ble.EqPreset) {
+        viewModelScope.launch {
+            Log.d(TAG, "Setting EQ preset to: ${preset.displayName}")
+            // Update local state
+            _eqPreset.value = preset
+
+            // Write preset to device
+            val presetWritten = bleManager.writeEqPreset(preset)
+            if (!presetWritten) {
+                Log.e(TAG, "Failed to write EQ preset")
+                return@launch
+            }
+
+            // Wait a bit for write to complete
+            kotlinx.coroutines.delay(200)
+
+            // Apply the configuration (with save)
+            val applied = bleManager.applyEqConfig(com.erikspinebuds.companion.ble.EqApplyCommand.APPLY_AND_SAVE)
+            if (applied) {
+                Log.d(TAG, "EQ preset applied and saved")
+            } else {
+                Log.e(TAG, "Failed to apply EQ config")
+            }
+        }
+    }
+
+    /**
+     * Set EQ enabled state
+     */
+    fun setEqEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            Log.d(TAG, "Setting EQ enabled to: $enabled")
+            // Update local state
+            _eqEnabled.value = enabled
+
+            // Write enabled state to device
+            val written = bleManager.writeEqEnabled(enabled)
+            if (!written) {
+                Log.e(TAG, "Failed to write EQ enabled state")
+                return@launch
+            }
+
+            // Wait a bit for write to complete
+            kotlinx.coroutines.delay(200)
+
+            // Apply the configuration (with save)
+            val applied = bleManager.applyEqConfig(com.erikspinebuds.companion.ble.EqApplyCommand.APPLY_AND_SAVE)
+            if (applied) {
+                Log.d(TAG, "EQ enabled state applied and saved")
+            } else {
+                Log.e(TAG, "Failed to apply EQ config")
+            }
+        }
+    }
+
+    /**
      * Called when a write completes successfully
      */
     private fun onWriteComplete() {
@@ -347,6 +461,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun disconnect() {
         bleManager.disconnect()
+        // Reset EQ state on disconnect
+        _eqAvailable.value = false
+        _eqEnabled.value = false
+        _eqPreset.value = com.erikspinebuds.companion.ble.EqPreset.FLAT
         _uiState.value = UiState.Scanning
     }
 

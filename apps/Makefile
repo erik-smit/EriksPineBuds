@@ -40,6 +40,7 @@ subdir-ccflags-y += -Iapps/apptester \
 					-Iservices/voicepath \
 					-Iservices/ble_app/app_datapath \
 					-Iservices/ble_profiles/opb_config \
+					-Iservices/ble_profiles/opb_eq \
 					-Iutils/list \
 					-Iutils/heap \
 					-Iservices/multimedia/audio/process/filters/include

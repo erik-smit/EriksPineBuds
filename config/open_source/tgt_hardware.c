@@ -997,28 +997,15 @@ const struct_anc_cfg *anc_coef_list_44p1k[ANC_COEF_LIST_NUM] = {
 #endif
 };
 
-const IIR_CFG_T audio_eq_sw_iir_cfg = {.gain0 = 0,
-                                       .gain1 = 0,
-                                       .num = 14,
-                                       .param = {
-                                           {IIR_TYPE_PEAK, -2.18, 10, 2},
-                                           {IIR_TYPE_PEAK, 7.27, 21, 2},
-                                           {IIR_TYPE_PEAK, 2.13, 42, 2},
-                                           {IIR_TYPE_PEAK, -1.53, 83, 2},
-                                           {IIR_TYPE_PEAK, -0.9, 120, 2},
-                                           {IIR_TYPE_PEAK, -4.23, 166, 2},
-                                           {IIR_TYPE_PEAK, -1.08, 333, 2},
-                                           {IIR_TYPE_PEAK, -1.37, 577, 2},
-                                           {IIR_TYPE_PEAK, 0.8, 1000, 2},
-                                           {IIR_TYPE_PEAK, 5.35, 2000, 2},
-                                           {IIR_TYPE_PEAK, 3.2, 4000, 2},
-                                           {IIR_TYPE_PEAK, -4.96, 8000, 2},
-                                           {IIR_TYPE_PEAK, 13.58, 16000, 2},
-                                           {IIR_TYPE_PEAK, 8.89, 20000, 2},
-                                       }};
+// Make this NON-CONST so OPB EQ can modify it at runtime
+// Starts flat - will be updated by app_opb_eq_init() during boot
+IIR_CFG_T audio_eq_sw_iir_cfg = {.gain0 = 0,
+                                  .gain1 = 0,
+                                  .num = 0,
+                                  .param = {}};
 
 const IIR_CFG_T *const audio_eq_sw_iir_cfg_list[EQ_SW_IIR_LIST_NUM] = {
-    &audio_eq_sw_iir_cfg,
+    &audio_eq_sw_iir_cfg,  // Points to modifiable config
 };
 
 const FIR_CFG_T audio_eq_hw_fir_cfg_44p1k = {.gain = 0.0f,
@@ -1045,24 +1032,24 @@ const FIR_CFG_T *const audio_eq_hw_fir_cfg_list[EQ_HW_FIR_LIST_NUM] = {
     &audio_eq_hw_fir_cfg_96k,
 };
 
-// hardware dac iir eq
-const IIR_CFG_T audio_eq_hw_dac_iir_cfg = audio_eq_sw_iir_cfg;
+// hardware dac iir eq (flat/disabled - we don't use these)
+const IIR_CFG_T audio_eq_hw_dac_iir_cfg = {.gain0 = 0, .gain1 = 0, .num = 0};
 
 const IIR_CFG_T *const POSSIBLY_UNUSED
     audio_eq_hw_dac_iir_cfg_list[EQ_HW_DAC_IIR_LIST_NUM] = {
         &audio_eq_hw_dac_iir_cfg,
 };
 
-// hardware dac iir eq
-const IIR_CFG_T audio_eq_hw_adc_iir_adc_cfg = audio_eq_sw_iir_cfg;
+// hardware adc iir eq (flat/disabled - we don't use these)
+const IIR_CFG_T audio_eq_hw_adc_iir_adc_cfg = {.gain0 = 0, .gain1 = 0, .num = 0};
 
 const IIR_CFG_T *const POSSIBLY_UNUSED
     audio_eq_hw_adc_iir_cfg_list[EQ_HW_ADC_IIR_LIST_NUM] = {
         &audio_eq_hw_adc_iir_adc_cfg,
 };
 
-// hardware iir eq
-const IIR_CFG_T audio_eq_hw_iir_cfg = audio_eq_sw_iir_cfg;
+// hardware iir eq (flat/disabled - we don't use these)
+const IIR_CFG_T audio_eq_hw_iir_cfg = {.gain0 = 0, .gain1 = 0, .num = 0};
 
 const IIR_CFG_T *const POSSIBLY_UNUSED
     audio_eq_hw_iir_cfg_list[EQ_HW_IIR_LIST_NUM] = {

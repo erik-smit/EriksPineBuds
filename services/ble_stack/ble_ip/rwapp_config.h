@@ -28,6 +28,8 @@
 #define CFG_PRF_DATAPATH
 #define CFG_APP_OPB_CONFIG
 #define CFG_PRF_OPB_CONFIG
+#define CFG_APP_OPB_EQ
+#define CFG_PRF_OPB_EQ
 
 #define FAST_PAIR_REV_1_0 0
 #define FAST_PAIR_REV_2_0 1
@@ -117,6 +119,13 @@
 #else // defined(CFG_APP_OPB_CONFIG)
 #define BLE_APP_OPB_CONFIG 0
 #endif // defined(CFG_APP_OPB_CONFIG)
+
+/// OpenPineBuds EQ Server Application
+#if defined(CFG_APP_OPB_EQ)
+#define BLE_APP_OPB_EQ 1
+#else // defined(CFG_APP_OPB_EQ)
+#define BLE_APP_OPB_EQ 0
+#endif // defined(CFG_APP_OPB_EQ)
 
 /// HID Application
 #if defined(CFG_APP_HID)

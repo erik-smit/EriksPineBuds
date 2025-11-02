@@ -50,6 +50,13 @@ void nvrecord_rebuild_system_env(struct nvrecord_env_t *pSystemEnv) {
   // Initialize device name to empty (will use factory default)
   memset(pSystemEnv->device_name, 0, sizeof(pSystemEnv->device_name));
 
+  // Initialize EQ configuration with flat (bypass) defaults
+  opb_eq_config_t default_eq = OPB_EQ_CONFIG_DEFAULT_FLAT;
+  pSystemEnv->eq_config = default_eq;
+  pSystemEnv->eq_enabled = false;
+  pSystemEnv->eq_preset = OPB_EQ_PRESET_FLAT;
+  memset(pSystemEnv->eq_reserved, 0, sizeof(pSystemEnv->eq_reserved));
+
   localSystemInfo = *pSystemEnv;
 }
 
@@ -171,6 +178,90 @@ int nv_record_set_device_name(const char *name) {
   strncpy(env->device_name, name, sizeof(env->device_name) - 1);
   env->device_name[sizeof(env->device_name) - 1] = '\0';
 
+  return nv_record_env_set(env);
+}
+
+// Get EQ configuration from NV storage
+int nv_record_get_eq_config(opb_eq_config_t **config) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!config)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  *config = &env->eq_config;
+  return 0;
+}
+
+// Set EQ configuration and mark for save
+int nv_record_set_eq_config(const opb_eq_config_t *config) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!config)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  env->eq_config = *config;
+  return nv_record_env_set(env);
+}
+
+// Get EQ enabled state from NV storage
+int nv_record_get_eq_enabled(bool **enabled) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!enabled)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  *enabled = &env->eq_enabled;
+  return 0;
+}
+
+// Set EQ enabled state and mark for save
+int nv_record_set_eq_enabled(const bool *enabled) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!enabled)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  env->eq_enabled = *enabled;
+  return nv_record_env_set(env);
+}
+
+// Get EQ preset from NV storage
+int nv_record_get_eq_preset(opb_eq_preset_t **preset) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!preset)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  *preset = &env->eq_preset;
+  return 0;
+}
+
+// Set EQ preset and mark for save
+int nv_record_set_eq_preset(const opb_eq_preset_t *preset) {
+  struct nvrecord_env_t *env = NULL;
+
+  if (!preset)
+    return -1;
+
+  if (nv_record_env_get(&env) != 0)
+    return -1;
+
+  env->eq_preset = *preset;
   return nv_record_env_set(env);
 }
 

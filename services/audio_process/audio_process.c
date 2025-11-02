@@ -62,6 +62,7 @@ Audio Flow:
 #include "stdbool.h"
 #include "string.h"
 #include "tgt_hardware.h"
+#include "app_opb_eq.h"
 
 #if defined(USB_EQ_TUNING)
 #if !defined(__HW_DAC_IIR_EQ_PROCESS__) && !defined(__SW_IIR_EQ_PROCESS__)
@@ -311,9 +312,8 @@ int audio_eq_set_cfg(const FIR_CFG_T *fir_cfg, const IIR_CFG_T *iir_cfg,
         iir_set_cfg(&audio_process.sw_iir_cfg);
       } else
 #endif
-      {
-        iir_set_cfg(iir_cfg);
-      }
+      // Use default config (which is updated by OPB EQ via update_global_eq_config())
+      iir_set_cfg(iir_cfg);
       audio_process.sw_iir_enable = true;
     } else {
       audio_process.sw_iir_enable = false;
@@ -360,7 +360,17 @@ int audio_eq_set_cfg(const FIR_CFG_T *fir_cfg, const IIR_CFG_T *iir_cfg,
                                               &audio_process.hw_dac_iir_cfg);
       } else
 #endif
-      {
+      // Check if OPB EQ is enabled and use it instead of default
+      if (app_opb_eq_is_enabled()) {
+        IIR_CFG_T opb_eq_iir_cfg;
+        if (app_opb_eq_get_iir_cfg(&opb_eq_iir_cfg, sample_rate_hw_dac_iir) == 0) {
+          TRACE(0, "[AUDIO_PROCESS] Using OPB EQ configuration");
+          hw_iir_cfg_dac = hw_codec_iir_get_cfg(sample_rate_hw_dac_iir, &opb_eq_iir_cfg);
+        } else {
+          // Fallback to default
+          hw_iir_cfg_dac = hw_codec_iir_get_cfg(sample_rate_hw_dac_iir, iir_cfg);
+        }
+      } else {
         hw_iir_cfg_dac = hw_codec_iir_get_cfg(sample_rate_hw_dac_iir, iir_cfg);
       }
       ASSERT(hw_iir_cfg_dac != NULL, "[%s] codec IIR parameter error!",

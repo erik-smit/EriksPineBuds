@@ -49,6 +49,14 @@ class BleManager(private val context: Context) {
     private var versionChar: BluetoothGattCharacteristic? = null
     private var deviceNameChar: BluetoothGattCharacteristic? = null
 
+    // EQ characteristics
+    private var eqConfigChar: BluetoothGattCharacteristic? = null
+    private var eqPresetChar: BluetoothGattCharacteristic? = null
+    private var eqEnableChar: BluetoothGattCharacteristic? = null
+    private var eqCapabilitiesChar: BluetoothGattCharacteristic? = null
+    private var eqApplyChar: BluetoothGattCharacteristic? = null
+    private var eqStatusChar: BluetoothGattCharacteristic? = null
+
     /**
      * Check if Bluetooth is enabled
      */
@@ -182,13 +190,33 @@ class BleManager(private val context: Context) {
                         deviceNameChar = configService.getCharacteristic(GattUuids.DEVICE_NAME)
 
                         Log.d(TAG, "Characteristics - Left: ${leftConfigChar != null}, Right: ${rightConfigChar != null}, Version: ${versionChar != null}, DeviceName: ${deviceNameChar != null}")
-
-                        _connectionState.value = ConnectionState.READY
-                        trySend(BleEvent.ServicesDiscovered)
                     } else {
                         Log.e(TAG, "Config service NOT FOUND!")
                         Log.e(TAG, "Expected UUID: ${GattUuids.CONFIG_SERVICE}")
                         trySend(BleEvent.Error("Config service 0xFFC0 not found. Is Phase 1 firmware flashed?"))
+                    }
+
+                    // Find EQ service and characteristics
+                    Log.d(TAG, "Looking for EQ service: ${GattUuids.EQ_SERVICE}")
+                    val eqService = gatt.getService(GattUuids.EQ_SERVICE)
+                    if (eqService != null) {
+                        Log.d(TAG, "EQ service FOUND!")
+                        eqConfigChar = eqService.getCharacteristic(GattUuids.EQ_CONFIG)
+                        eqPresetChar = eqService.getCharacteristic(GattUuids.EQ_PRESET)
+                        eqEnableChar = eqService.getCharacteristic(GattUuids.EQ_ENABLE)
+                        eqCapabilitiesChar = eqService.getCharacteristic(GattUuids.EQ_CAPABILITIES)
+                        eqApplyChar = eqService.getCharacteristic(GattUuids.EQ_APPLY)
+                        eqStatusChar = eqService.getCharacteristic(GattUuids.EQ_STATUS)
+
+                        Log.d(TAG, "EQ Characteristics - Config: ${eqConfigChar != null}, Preset: ${eqPresetChar != null}, Enable: ${eqEnableChar != null}, Caps: ${eqCapabilitiesChar != null}, Apply: ${eqApplyChar != null}, Status: ${eqStatusChar != null}")
+                    } else {
+                        Log.w(TAG, "EQ service NOT FOUND (0xFFD0) - EQ features will be unavailable")
+                    }
+
+                    // Mark as ready if at least config service was found
+                    if (configService != null) {
+                        _connectionState.value = ConnectionState.READY
+                        trySend(BleEvent.ServicesDiscovered)
                     }
                 } else {
                     Log.e(TAG, "Service discovery failed: $status")
@@ -302,6 +330,81 @@ class BleManager(private val context: Context) {
     }
 
     /**
+     * Read current EQ preset
+     */
+    @SuppressLint("MissingPermission")
+    fun readEqPreset(): Boolean {
+        val char = eqPresetChar ?: return false
+        return bluetoothGatt?.readCharacteristic(char) == true
+    }
+
+    /**
+     * Write EQ preset
+     * @param preset EQ preset enum value (0-9)
+     */
+    @SuppressLint("MissingPermission")
+    fun writeEqPreset(preset: EqPreset): Boolean {
+        val char = eqPresetChar ?: return false
+        // Convert preset to 4-byte little-endian uint32
+        val data = ByteArray(4)
+        data[0] = (preset.value and 0xFF).toByte()
+        data[1] = ((preset.value shr 8) and 0xFF).toByte()
+        data[2] = ((preset.value shr 16) and 0xFF).toByte()
+        data[3] = ((preset.value shr 24) and 0xFF).toByte()
+
+        char.value = data
+        char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        return bluetoothGatt?.writeCharacteristic(char) == true
+    }
+
+    /**
+     * Read EQ enabled state
+     */
+    @SuppressLint("MissingPermission")
+    fun readEqEnabled(): Boolean {
+        val char = eqEnableChar ?: return false
+        return bluetoothGatt?.readCharacteristic(char) == true
+    }
+
+    /**
+     * Write EQ enabled state
+     * @param enabled true to enable EQ, false to disable
+     */
+    @SuppressLint("MissingPermission")
+    fun writeEqEnabled(enabled: Boolean): Boolean {
+        val char = eqEnableChar ?: return false
+        // Write 4 bytes: [enabled, 0, 0, 0]
+        val data = ByteArray(4)
+        data[0] = if (enabled) 1 else 0
+        data[1] = 0
+        data[2] = 0
+        data[3] = 0
+
+        char.value = data
+        char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        return bluetoothGatt?.writeCharacteristic(char) == true
+    }
+
+    /**
+     * Apply EQ configuration
+     * @param command Apply command (APPLY_AND_SAVE, APPLY_TEMPORARY, RESET_TO_FLAT)
+     */
+    @SuppressLint("MissingPermission")
+    fun applyEqConfig(command: Byte): Boolean {
+        val char = eqApplyChar ?: return false
+        char.value = byteArrayOf(command)
+        char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        return bluetoothGatt?.writeCharacteristic(char) == true
+    }
+
+    /**
+     * Check if EQ service is available
+     */
+    fun isEqAvailable(): Boolean {
+        return eqPresetChar != null
+    }
+
+    /**
      * Disconnect from device
      */
     @SuppressLint("MissingPermission")
@@ -321,6 +424,12 @@ class BleManager(private val context: Context) {
         rightConfigChar = null
         versionChar = null
         deviceNameChar = null
+        eqConfigChar = null
+        eqPresetChar = null
+        eqEnableChar = null
+        eqCapabilitiesChar = null
+        eqApplyChar = null
+        eqStatusChar = null
     }
 }
 

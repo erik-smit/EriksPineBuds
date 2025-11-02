@@ -126,6 +126,9 @@ class MainActivity : AppCompatActivity() {
 
         // Make config cards clickable to edit
         setupConfigCardClickListeners()
+
+        // Setup EQ UI
+        setupEqUI()
     }
 
     private fun saveDeviceNameIfChanged() {
@@ -146,6 +149,65 @@ class MainActivity : AppCompatActivity() {
         // Right earbud card - click to show gesture menu
         binding.cardRight.setOnClickListener {
             showGesturePickerForEarbud(isLeft = false)
+        }
+    }
+
+    private fun setupEqUI() {
+        // EQ Enable Switch
+        binding.switchEqEnable.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setEqEnabled(isChecked)
+            Toast.makeText(this, "EQ ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+        }
+
+        // EQ Preset Buttons
+        binding.btnEqFlat.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.FLAT)
+            Toast.makeText(this, "EQ Preset: Flat", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqBassBoost.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.BASS_BOOST)
+            Toast.makeText(this, "EQ Preset: Bass Boost", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqTrebleBoost.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.TREBLE_BOOST)
+            Toast.makeText(this, "EQ Preset: Treble Boost", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqVShape.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.V_SHAPE)
+            Toast.makeText(this, "EQ Preset: V-Shape", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqVocal.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.VOCAL)
+            Toast.makeText(this, "EQ Preset: Vocal", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqClassical.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.CLASSICAL)
+            Toast.makeText(this, "EQ Preset: Classical", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqRock.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.ROCK)
+            Toast.makeText(this, "EQ Preset: Rock", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqJazz.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.JAZZ)
+            Toast.makeText(this, "EQ Preset: Jazz", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqElectronic.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.ELECTRONIC)
+            Toast.makeText(this, "EQ Preset: Electronic", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnEqPodcast.setOnClickListener {
+            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.PODCAST)
+            Toast.makeText(this, "EQ Preset: Podcast", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -272,6 +334,33 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        lifecycleScope.launch {
+            viewModel.eqAvailable.collect { available ->
+                // Show/hide EQ card based on availability
+                binding.cardEq.visibility = if (available) android.view.View.VISIBLE else android.view.View.GONE
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.eqEnabled.collect { enabled ->
+                // Update switch without triggering listener
+                if (binding.switchEqEnable.isChecked != enabled) {
+                    binding.switchEqEnable.setOnCheckedChangeListener(null)
+                    binding.switchEqEnable.isChecked = enabled
+                    binding.switchEqEnable.setOnCheckedChangeListener { _, isChecked ->
+                        viewModel.setEqEnabled(isChecked)
+                        Toast.makeText(this@MainActivity, "EQ ${if (isChecked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            viewModel.eqPreset.collect { preset ->
+                binding.tvEqCurrent.text = "Current: ${preset.displayName}"
+            }
+        }
     }
 
     private fun updateUIForState(state: UiState) {
@@ -359,7 +448,12 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Configuration saved successfully", Toast.LENGTH_SHORT).show()
             }
             is UiState.Disconnected -> {
-                binding.tvStatus.text = "Disconnected"
+                val deviceCount = viewModel.devices.value.size
+                binding.tvStatus.text = if (deviceCount == 0) {
+                    "Disconnected - Tap 'Scan for Devices' to reconnect"
+                } else {
+                    "Disconnected - Select a device to reconnect"
+                }
                 Toast.makeText(this, "Disconnected from device", Toast.LENGTH_SHORT).show()
                 // Enable scan button, disable disconnect button
                 binding.btnScan.isEnabled = true
@@ -367,8 +461,11 @@ class MainActivity : AppCompatActivity() {
                 binding.btnDisconnect.isEnabled = false
                 binding.btnSave.isEnabled = false
                 binding.btnReload.isEnabled = false
-                // Hide config UI when disconnected
+                // Show device list again, hide config UI
+                binding.tvDeviceListTitle.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
+                binding.recyclerDevices.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
                 binding.cardDeviceName.visibility = android.view.View.GONE
+                binding.cardEq.visibility = android.view.View.GONE
                 binding.tvConfigTitle.visibility = android.view.View.GONE
                 binding.cardLeft.visibility = android.view.View.GONE
                 binding.cardRight.visibility = android.view.View.GONE

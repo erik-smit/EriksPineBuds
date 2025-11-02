@@ -15,6 +15,8 @@ ccflags-y := \
 	-Iservices/multimedia/speech/inc \
 	-Iservices/nv_section/aud_section \
 	-Iservices/nv_section/include \
+	-Iservices/app_opb_eq \
+	-Iservices/ble_profiles/opb_eq \
 	-Iutils/heap/
 
 ifeq ($(HW_FIR_EQ_PROCESS),1)
@@ -27,6 +29,7 @@ endif
 
 ifeq ($(SW_IIR_EQ_PROCESS),1)
 ccflags-y += -D__SW_IIR_EQ_PROCESS__
+ccflags-y += -DAUDIO_EQ_SW_IIR_UPDATE_CFG
 endif
 
 ifeq ($(AUDIO_DRC),1)

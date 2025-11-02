@@ -84,6 +84,7 @@ enum BLE_ADV_USER_E {
     USER_TILE            = 5,
     USER_OTA             = 6,
     USER_OPB_CONFIG      = 7,
+    USER_OPB_EQ          = 8,
     BLE_ADV_USER_NUM,
 };
 

@@ -66,6 +66,10 @@
 #include "app_opb_config_server.h" // OpenPineBuds Config Server Application Definitions
 #endif                             //(BLE_APP_OPB_CONFIG)
 
+#if (BLE_APP_OPB_EQ)
+#include "app_opb_eq_server.h" // OpenPineBuds EQ Server Application Definitions
+#endif                         //(BLE_APP_OPB_EQ)
+
 #if (BLE_APP_DIS)
 #include "app_dis.h" // Device Information Service Application Definitions
 #endif               //(BLE_APP_DIS)
@@ -263,6 +267,9 @@ enum appm_svc_list {
 #if (BLE_APP_OPB_CONFIG)
   APPM_SVC_OPB_CONFIG,
 #endif //(BLE_APP_OPB_CONFIG)
+#if (BLE_APP_OPB_EQ)
+  APPM_SVC_OPB_EQ,
+#endif //(BLE_APP_OPB_EQ)
 #if (BLE_APP_VOICEPATH)
   APPM_SVC_VOICEPATH,
 #ifdef BISTO_ENABLED
@@ -339,6 +346,9 @@ static const appm_add_svc_func_t appm_add_svc_func_list[APPM_SVC_LIST_STOP] = {
 #if (BLE_APP_OPB_CONFIG)
     (appm_add_svc_func_t)app_opb_config_add_server,
 #endif //(BLE_APP_OPB_CONFIG)
+#if (BLE_APP_OPB_EQ)
+    (appm_add_svc_func_t)app_opb_eq_add_server,
+#endif //(BLE_APP_OPB_EQ)
 #if (BLE_APP_VOICEPATH)
     (appm_add_svc_func_t)app_ble_voicepath_add_svc,
 #ifdef BISTO_ENABLED
@@ -507,6 +517,10 @@ void appm_init() {
   // OpenPineBuds Config Server Module
   app_opb_config_server_init();
 #endif //(BLE_APP_OPB_CONFIG)
+#if (BLE_APP_OPB_EQ)
+  // OpenPineBuds EQ Server Module
+  app_opb_eq_server_init();
+#endif //(BLE_APP_OPB_EQ)
 #if (BLE_APP_AI_VOICE)
   // AI Voice Module
   app_ai_init();

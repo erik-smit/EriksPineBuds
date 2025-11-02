@@ -6,6 +6,7 @@ ifneq ($(__BES_OTA_MODE__),1)
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)app_htp/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)app_datapath/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)app_opb_config/*.c))
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)app_opb_eq/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)app_hrps/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)app_hid/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)app_sec/*.c))
@@ -87,10 +88,12 @@ subdir-ccflags-y += \
     -Iservices/ble_profiles/htp/ \
     -Iservices/ble_profiles/datapath/datapathps/api/ \
     -Iservices/ble_profiles/opb_config/opb_configps/api/ \
+    -Iservices/ble_profiles/opb_eq/opb_eqps/api/ \
     -Iservices/ble_app/app_main/ \
     -Iservices/ble_app/app_htp/ \
     -Iservices/ble_app/app_datapath/ \
     -Iservices/ble_app/app_opb_config/ \
+    -Iservices/ble_app/app_opb_eq/ \
     -Iservices/ble_app/app_hrps/ \
     -Iservices/ble_profiles/hrp/hrps/api/ \
     -Iservices/ble_profiles/hrp/hrps/src \

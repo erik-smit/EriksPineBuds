@@ -22,10 +22,11 @@
 #include "me_api.h"
 #include <stdbool.h>
 #include "opb_config_common.h"
+#include "opb_eq_common.h"
 
 // increase by 1 if the nvrecord's whole data structure is changed and the
 // content needs to be rebuilt
-#define NV_EXTENSION_MAJOR_VERSION 4
+#define NV_EXTENSION_MAJOR_VERSION 5
 // increase by 1 if the new items are appended to the tail of the former
 // nvrecord's data structure
 #define NV_EXTENSION_MINOR_VERSION 0
@@ -152,6 +153,10 @@ struct nvrecord_env_t {
   AI_MANAGER_INFO_T aiManagerInfo;
   opb_config_t button_config;
   char device_name[32]; // Device name override (empty = use factory default)
+  opb_eq_config_t eq_config;
+  bool eq_enabled;
+  opb_eq_preset_t eq_preset;
+  uint8_t eq_reserved[3]; // Padding for alignment
 };
 
 typedef struct btdevice_volume {

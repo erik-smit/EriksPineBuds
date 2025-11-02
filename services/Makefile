@@ -1,6 +1,8 @@
 # Global include for OPB config headers
 subdir-ccflags-y += -Iservices/ble_profiles/opb_config
 subdir-ccflags-y += -Iservices/app_opb_config
+subdir-ccflags-y += -Iservices/ble_profiles/opb_eq
+subdir-ccflags-y += -Iservices/app_opb_eq
 
 # Include path for TWS headers when TWS is enabled
 ifeq ($(TWS_SYSTEM_ENABLED),1)
@@ -20,6 +22,7 @@ obj-y := audio_dump/ \
          osif/ \
          norflash_api/ \
          app_opb_config/ \
+         app_opb_eq/ \
 
 ifeq ($(BONE_SENSOR_TDM),1)
 obj-y += bone_sensor/

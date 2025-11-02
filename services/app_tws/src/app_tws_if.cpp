@@ -122,6 +122,7 @@ static const char *tws_sync_user2str(TWS_SYNC_USER_E user) {
     CASES(TWS_SYNC_USER_AI_MANAGER);
     CASES(TWS_SYNC_USER_DIP);
     CASES(TWS_SYNC_USER_OPB_CONFIG);
+    CASES(TWS_SYNC_USER_OPB_EQ);
 
   default:
     str = "[INVALID]";

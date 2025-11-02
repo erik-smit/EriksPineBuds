@@ -226,6 +226,188 @@
                 tools:text="Right Earbud:\n• Single Tap: Play/Pause\n• Double Tap: Next\n• Triple Tap: Vol Up\n• Long Press: ANC" />
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- EQ Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_eq"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/card_right">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- EQ Title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Equalizer"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <!-- EQ Enable Switch -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Enable EQ"
+                        android:textSize="16sp" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_eq_enable"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+
+                <!-- EQ Preset Label -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Preset"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- EQ Preset Buttons Grid -->
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:columnCount="2"
+                    android:rowCount="5"
+                    android:alignmentMode="alignBounds"
+                    android:columnOrderPreserved="false">
+
+                    <Button
+                        android:id="@+id/btn_eq_flat"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Flat"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_bass_boost"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Bass Boost"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_treble_boost"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Treble Boost"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_v_shape"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="V-Shape"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_vocal"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Vocal"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_classical"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Classical"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_rock"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Rock"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_jazz"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Jazz"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_electronic"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Electronic"
+                        android:textColor="?android:attr/textColorPrimary" />
+
+                    <Button
+                        android:id="@+id/btn_eq_podcast"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:layout_margin="4dp"
+                        android:text="Podcast"
+                        android:textColor="?android:attr/textColorPrimary" />
+                </GridLayout>
+
+                <!-- Current Preset Display -->
+                <TextView
+                    android:id="@+id/tv_eq_current"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:text="Current: Flat"
+                    android:textSize="14sp"
+                    android:textStyle="italic" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Action Buttons -->
         <Button
             android:id="@+id/btn_reload"
@@ -237,7 +419,7 @@
             app:layout_constraintEnd_toStartOf="@+id/btn_save"
             app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/card_right" />
+            app:layout_constraintTop_toBottomOf="@+id/card_eq" />
 
         <Button
             android:id="@+id/btn_save"
