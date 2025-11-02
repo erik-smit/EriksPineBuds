@@ -237,8 +237,8 @@ int app_opb_eq_init(void) {
         TRACE(0, "[OPB_EQ] Global config set to flat (EQ disabled)");
     }
 
-    // Initialize TWS sync
-    app_opb_eq_tws_sync_init();
+    // Note: TWS sync is initialized by app_tws_if.cpp during TWS system init
+    // No need to call app_opb_eq_tws_sync_init() here
 
     return 0;
 }

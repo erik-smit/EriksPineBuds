@@ -26,6 +26,7 @@
 #include "app_dip.h"
 #include "app_ibrt_ui.h"
 #include "app_opb_config.h"
+#include "app_opb_eq.h"
 #include "app_sec.h"
 #include "app_tws_ctrl_thread.h"
 #include "app_tws_ibrt_cmd_handler.h"
@@ -175,6 +176,9 @@ void app_tws_if_init(void) {
 
   // Initialize OpenPineBuds config sync
   app_opb_config_tws_sync_init();
+
+  // Initialize OpenPineBuds EQ sync
+  app_opb_eq_tws_sync_init();
 }
 
 void app_tws_if_role_switch_started_handler(void) {
