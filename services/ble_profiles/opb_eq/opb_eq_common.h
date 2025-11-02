@@ -35,6 +35,8 @@ typedef enum {
     OPB_EQ_PRESET_CUSTOM = 0xFF
 } opb_eq_preset_t;
 
+#define OPB_EQ_PRESET_MAX 10  // Number of built-in presets (0-9)
+
 // Single EQ band configuration (16 bytes - matches GATT spec)
 typedef struct __attribute__((packed)) {
     uint32_t type;          // opb_eq_filter_type_t

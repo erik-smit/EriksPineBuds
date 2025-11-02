@@ -210,23 +210,35 @@ int app_opb_eq_init(void) {
 
     eq_initialized = true;
 
-    // DIRECTLY update global config (bypass function)
-    TRACE(0, "[OPB_EQ] *** DIRECTLY updating global audio_eq_sw_iir_cfg ***");
-    audio_eq_sw_iir_cfg.gain0 = current_eq_config.gain0;
-    audio_eq_sw_iir_cfg.gain1 = current_eq_config.gain1;
-    audio_eq_sw_iir_cfg.num = current_eq_config.num_bands;
-    for (uint32_t i = 0; i < current_eq_config.num_bands && i < 8; i++) {
-        audio_eq_sw_iir_cfg.param[i].type = (IIR_TYPE_T)current_eq_config.bands[i].type;
-        audio_eq_sw_iir_cfg.param[i].gain = current_eq_config.bands[i].gain;
-        audio_eq_sw_iir_cfg.param[i].fc = current_eq_config.bands[i].frequency;
-        audio_eq_sw_iir_cfg.param[i].Q = current_eq_config.bands[i].q;
-        TRACE(4, "[OPB_EQ] Band %d: type=%d gain=%.1f fc=%.0f Q=%.2f",
-              i, (int)audio_eq_sw_iir_cfg.param[i].type,
-              (double)audio_eq_sw_iir_cfg.param[i].gain,
-              (double)audio_eq_sw_iir_cfg.param[i].fc,
-              (double)audio_eq_sw_iir_cfg.param[i].Q);
+    // Update global config based on enabled state
+    TRACE(1, "[OPB_EQ] *** Updating global audio_eq_sw_iir_cfg (enabled=%d) ***", eq_enabled);
+    if (eq_enabled) {
+        // EQ enabled: Copy config to global
+        audio_eq_sw_iir_cfg.gain0 = current_eq_config.gain0;
+        audio_eq_sw_iir_cfg.gain1 = current_eq_config.gain1;
+        audio_eq_sw_iir_cfg.num = current_eq_config.num_bands;
+        for (uint32_t i = 0; i < current_eq_config.num_bands && i < 8; i++) {
+            audio_eq_sw_iir_cfg.param[i].type = (IIR_TYPE_T)current_eq_config.bands[i].type;
+            audio_eq_sw_iir_cfg.param[i].gain = current_eq_config.bands[i].gain;
+            audio_eq_sw_iir_cfg.param[i].fc = current_eq_config.bands[i].frequency;
+            audio_eq_sw_iir_cfg.param[i].Q = current_eq_config.bands[i].q;
+            TRACE(5, "[OPB_EQ] Band %d: type=%d gain=%.1f fc=%.0f Q=%.2f",
+                  i, (int)audio_eq_sw_iir_cfg.param[i].type,
+                  (double)audio_eq_sw_iir_cfg.param[i].gain,
+                  (double)audio_eq_sw_iir_cfg.param[i].fc,
+                  (double)audio_eq_sw_iir_cfg.param[i].Q);
+        }
+        TRACE(2, "[OPB_EQ] Global config updated with %d bands (EQ enabled)", audio_eq_sw_iir_cfg.num);
+    } else {
+        // EQ disabled: Set flat config
+        audio_eq_sw_iir_cfg.num = 0;
+        audio_eq_sw_iir_cfg.gain0 = 0.0f;
+        audio_eq_sw_iir_cfg.gain1 = 0.0f;
+        TRACE(0, "[OPB_EQ] Global config set to flat (EQ disabled)");
     }
-    TRACE(2, "[OPB_EQ] Global config updated: bands=%d", audio_eq_sw_iir_cfg.num);
+
+    // Initialize TWS sync
+    app_opb_eq_tws_sync_init();
 
     return 0;
 }
@@ -363,20 +375,12 @@ int app_opb_eq_set_enabled(bool enabled, bool save_to_nv) {
 
     TRACE(2, "[OPB_EQ] Set enabled=%d (save=%d)", enabled, save_to_nv);
 
-    bool was_enabled = eq_enabled;
     eq_enabled = enabled;
 
-    // When disabling, clear the global config bands so audio_process.c picks up flat EQ
-    // When enabling, restore from current_eq_config
-    if (!enabled && was_enabled) {
-        // Disabling: Set global config to flat (0 bands)
-        TRACE(0, "[OPB_EQ] Disabling EQ - clearing global config");
-        audio_eq_sw_iir_cfg.num = 0;
-        audio_eq_sw_iir_cfg.gain0 = 0.0f;
-        audio_eq_sw_iir_cfg.gain1 = 0.0f;
-    } else if (enabled && !was_enabled) {
-        // Enabling: Restore global config from current_eq_config
-        TRACE(0, "[OPB_EQ] Enabling EQ - restoring global config");
+    // Update global config based on enabled state
+    if (enabled) {
+        // Enabled: Always update global config from current_eq_config
+        TRACE(0, "[OPB_EQ] EQ enabled - updating global config");
         audio_eq_sw_iir_cfg.gain0 = current_eq_config.gain0;
         audio_eq_sw_iir_cfg.gain1 = current_eq_config.gain1;
         audio_eq_sw_iir_cfg.num = current_eq_config.num_bands;
@@ -386,6 +390,12 @@ int app_opb_eq_set_enabled(bool enabled, bool save_to_nv) {
             audio_eq_sw_iir_cfg.param[i].fc = current_eq_config.bands[i].frequency;
             audio_eq_sw_iir_cfg.param[i].Q = current_eq_config.bands[i].q;
         }
+    } else {
+        // Disabled: Clear global config (flat)
+        TRACE(0, "[OPB_EQ] EQ disabled - clearing global config");
+        audio_eq_sw_iir_cfg.num = 0;
+        audio_eq_sw_iir_cfg.gain0 = 0.0f;
+        audio_eq_sw_iir_cfg.gain1 = 0.0f;
     }
 
     if (save_to_nv) {
@@ -657,39 +667,76 @@ void app_opb_eq_apply_immediately(void) {
 static void opb_eq_tws_sync_info_prepare_handler(uint8_t *buf, uint16_t *len) {
     TRACE(0, "[OPB_EQ_TWS] Preparing EQ config to sync to peer");
 
-    // Prepare sync data (config + enabled + preset)
-    memcpy(buf, &current_eq_config, sizeof(opb_eq_config_t));
-    buf += sizeof(opb_eq_config_t);
-
+    // SIMPLIFIED: Just send enabled + preset (2 bytes instead of 146)
+    // Slave will load the preset from its own built-in preset array
     *buf++ = eq_enabled ? 1 : 0;
     *buf++ = (uint8_t)current_preset;
 
-    *len = sizeof(opb_eq_config_t) + 2;
-    TRACE(2, "[OPB_EQ_TWS] Prepared: bands=%d, enabled=%d",
-          current_eq_config.num_bands, eq_enabled);
+    *len = 2;
+    TRACE(2, "[OPB_EQ_TWS] Prepared: enabled=%d, preset=%d", eq_enabled, current_preset);
 }
 
 static void opb_eq_tws_sync_info_received_handler(uint8_t *buf, uint16_t len) {
     TRACE(2, "[OPB_EQ_TWS] Received EQ config from peer, len=%d", len);
 
-    if (len < sizeof(opb_eq_config_t) + 2) {
-        TRACE(0, "[OPB_EQ_TWS] ERROR: Invalid length");
+    if (len != 2) {
+        TRACE(2, "[OPB_EQ_TWS] ERROR: Invalid length %d, expected 2", len);
         return;
     }
 
-    memcpy(&current_eq_config, buf, sizeof(opb_eq_config_t));
-    buf += sizeof(opb_eq_config_t);
-
+    // Parse enabled + preset
     eq_enabled = (*buf++ != 0);
     current_preset = (opb_eq_preset_t)*buf;
 
-    TRACE(3, "[OPB_EQ_TWS] Applied from peer: bands=%d, enabled=%d, preset=%d",
-          current_eq_config.num_bands, eq_enabled, current_preset);
+    TRACE(2, "[OPB_EQ_TWS] Received: enabled=%d, preset=%d", eq_enabled, current_preset);
 
-    // Apply to hardware
-    if (eq_enabled) {
-        app_opb_eq_apply_to_hardware(48000);
+    // Load the preset from built-in preset array
+    if (current_preset < OPB_EQ_PRESET_MAX) {
+        current_eq_config = eq_presets[current_preset];
+        TRACE(2, "[OPB_EQ_TWS] Loaded preset %d: %d bands", current_preset, current_eq_config.num_bands);
+    } else {
+        TRACE(1, "[OPB_EQ_TWS] ERROR: Invalid preset %d", current_preset);
+        return;
     }
+
+    // Update global config from preset
+    if (eq_enabled) {
+        // Enabled: Copy preset bands to global config
+        audio_eq_sw_iir_cfg.gain0 = current_eq_config.gain0;
+        audio_eq_sw_iir_cfg.gain1 = current_eq_config.gain1;
+        audio_eq_sw_iir_cfg.num = current_eq_config.num_bands;
+        for (uint32_t i = 0; i < current_eq_config.num_bands && i < 8; i++) {
+            audio_eq_sw_iir_cfg.param[i].type = (IIR_TYPE_T)current_eq_config.bands[i].type;
+            audio_eq_sw_iir_cfg.param[i].gain = current_eq_config.bands[i].gain;
+            audio_eq_sw_iir_cfg.param[i].fc = current_eq_config.bands[i].frequency;
+            audio_eq_sw_iir_cfg.param[i].Q = current_eq_config.bands[i].q;
+        }
+        TRACE(1, "[OPB_EQ_TWS] Updated global config with %d bands", audio_eq_sw_iir_cfg.num);
+    } else {
+        // Disabled: Clear global config
+        audio_eq_sw_iir_cfg.num = 0;
+        audio_eq_sw_iir_cfg.gain0 = 0.0f;
+        audio_eq_sw_iir_cfg.gain1 = 0.0f;
+        TRACE(0, "[OPB_EQ_TWS] Cleared global config (EQ disabled)");
+    }
+
+    // Apply immediately to slave bud
+    TRACE(0, "[OPB_EQ_TWS] Applying EQ config on slave...");
+    app_opb_eq_apply_immediately();
+    TRACE(0, "[OPB_EQ_TWS] ✓ EQ applied on slave bud");
+
+    // Save to slave's NV storage so it persists
+    TRACE(0, "[OPB_EQ_TWS] Saving to slave's NV storage...");
+    if (nv_record_set_eq_config(&current_eq_config) != 0) {
+        TRACE(0, "[OPB_EQ_TWS] ERROR: Failed to save config to NV");
+    }
+    if (nv_record_set_eq_enabled(&eq_enabled) != 0) {
+        TRACE(0, "[OPB_EQ_TWS] ERROR: Failed to save enabled state to NV");
+    }
+    if (nv_record_set_eq_preset(&current_preset) != 0) {
+        TRACE(0, "[OPB_EQ_TWS] ERROR: Failed to save preset to NV");
+    }
+    TRACE(0, "[OPB_EQ_TWS] ✓ Saved to slave's NV storage");
 }
 
 void app_opb_eq_tws_sync_init(void) {

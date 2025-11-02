@@ -30,6 +30,7 @@
 #include "string.h"
 #include "hal_trace.h"
 #include "app_ble_mode_switch.h"
+#include "app_opb_eq.h"  // EQ manager functions
 
 /*
  * GLOBAL VARIABLE DEFINITIONS
@@ -78,6 +79,13 @@ void app_opb_eq_server_init(void) {
     // Reset the environment
     TRACE(0, "[OPB_EQ_APP] Initializing");
     app_opb_eq_server_env.connectionIndex = 0xFF;
+
+    // Initialize EQ manager early (loads config from NV and updates global audio config)
+    // This must happen BEFORE audio streams initialize, so that audio_eq_sw_iir_cfg
+    // is set correctly from NV storage instead of using the flat default
+    TRACE(0, "[OPB_EQ_APP] Calling app_opb_eq_init() to load config from NV");
+    app_opb_eq_init();
+    TRACE(0, "[OPB_EQ_APP] EQ config loaded from NV storage");
 
     // Register advertising data fill handler
     TRACE(0, "[OPB_EQ_APP] Registering advertising handler");
