@@ -36,138 +36,136 @@ static const opb_eq_config_t eq_presets[] = {
         .reserved = 0
     },
 
-    // BASS_BOOST - EXTREME (should sound BOOMY)
+    // BASS_BOOST - Warm, punchy bass
     {
-        .gain0 = 3.0f,
-        .gain1 = 3.0f,
+        .gain0 = 0.0f,
+        .gain1 = 0.0f,
         .num_bands = 3,
         .reserved = 0,
         .bands = {
-            {OPB_EQ_FILTER_LOW_SHELF, 18.0f, 80.0f, 0.7f},    // MASSIVE bass
-            {OPB_EQ_FILTER_PEAK, 12.0f, 200.0f, 1.5f},        // Extra mid-bass
-            {OPB_EQ_FILTER_HIGH_SHELF, -12.0f, 6000.0f, 0.7f}, // Cut treble heavily
+            {OPB_EQ_FILTER_LOW_SHELF, 6.0f, 100.0f, 0.7f},   // Warm sub-bass
+            {OPB_EQ_FILTER_PEAK, 4.0f, 250.0f, 1.0f},        // Punch in mid-bass
+            {OPB_EQ_FILTER_PEAK, -1.0f, 2000.0f, 1.0f},      // Slight mid reduction for clarity
         }
     },
 
-    // TREBLE_BOOST - EXTREME (should sound BRIGHT/TINNY)
-    {
-        .gain0 = 3.0f,
-        .gain1 = 3.0f,
-        .num_bands = 3,
-        .reserved = 0,
-        .bands = {
-            {OPB_EQ_FILTER_LOW_SHELF, -18.0f, 300.0f, 0.7f},  // Kill bass completely
-            {OPB_EQ_FILTER_PEAK, -10.0f, 1000.0f, 1.5f},      // Cut mids
-            {OPB_EQ_FILTER_HIGH_SHELF, 18.0f, 6000.0f, 0.7f}, // MASSIVE treble boost
-        }
-    },
-
-    // V_SHAPE - EXTREME (bass + treble, hollow mids)
-    {
-        .gain0 = 3.0f,
-        .gain1 = 3.0f,
-        .num_bands = 5,
-        .reserved = 0,
-        .bands = {
-            {OPB_EQ_FILTER_LOW_SHELF, 15.0f, 80.0f, 0.7f},    // Huge bass
-            {OPB_EQ_FILTER_PEAK, -12.0f, 800.0f, 2.0f},       // Scoop mids heavily
-            {OPB_EQ_FILTER_PEAK, -10.0f, 2000.0f, 2.0f},      // More mid scoop
-            {OPB_EQ_FILTER_PEAK, 12.0f, 6000.0f, 1.5f},       // Big treble peak
-            {OPB_EQ_FILTER_HIGH_SHELF, 15.0f, 12000.0f, 0.7f}, // Huge air
-        }
-    },
-
-    // VOCAL
-    {
-        .gain0 = 0.0f,
-        .gain1 = 0.0f,
-        .num_bands = 5,
-        .reserved = 0,
-        .bands = {
-            {OPB_EQ_FILTER_PEAK, -2.0f, 150.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 3.0f, 800.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 4.0f, 2000.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 2.0f, 3500.0f, 1.0f},
-            {OPB_EQ_FILTER_HIGH_SHELF, -3.0f, 10000.0f, 0.7f},
-        }
-    },
-
-    // CLASSICAL
-    {
-        .gain0 = 0.0f,
-        .gain1 = 0.0f,
-        .num_bands = 6,
-        .reserved = 0,
-        .bands = {
-            {OPB_EQ_FILTER_LOW_SHELF, 3.0f, 60.0f, 0.7f},
-            {OPB_EQ_FILTER_PEAK, -1.0f, 250.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 1.5f, 1000.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 2.0f, 3000.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 1.0f, 8000.0f, 1.0f},
-            {OPB_EQ_FILTER_HIGH_SHELF, 2.0f, 14000.0f, 0.7f},
-        }
-    },
-
-    // ROCK
-    {
-        .gain0 = 0.0f,
-        .gain1 = 0.0f,
-        .num_bands = 6,
-        .reserved = 0,
-        .bands = {
-            {OPB_EQ_FILTER_LOW_SHELF, 4.0f, 70.0f, 0.7f},
-            {OPB_EQ_FILTER_PEAK, 2.0f, 200.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 3.0f, 800.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, -1.0f, 2000.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 2.0f, 5000.0f, 1.0f},
-            {OPB_EQ_FILTER_HIGH_SHELF, 3.0f, 12000.0f, 0.7f},
-        }
-    },
-
-    // JAZZ
-    {
-        .gain0 = 0.0f,
-        .gain1 = 0.0f,
-        .num_bands = 6,
-        .reserved = 0,
-        .bands = {
-            {OPB_EQ_FILTER_LOW_SHELF, 2.0f, 70.0f, 0.7f},
-            {OPB_EQ_FILTER_PEAK, 1.0f, 400.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 2.0f, 1500.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 3.0f, 4000.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 1.0f, 8000.0f, 1.0f},
-            {OPB_EQ_FILTER_HIGH_SHELF, 1.0f, 14000.0f, 0.7f},
-        }
-    },
-
-    // ELECTRONIC
-    {
-        .gain0 = 0.0f,
-        .gain1 = 0.0f,
-        .num_bands = 7,
-        .reserved = 0,
-        .bands = {
-            {OPB_EQ_FILTER_LOW_SHELF, 7.0f, 50.0f, 0.7f},
-            {OPB_EQ_FILTER_PEAK, 4.0f, 120.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, -2.0f, 500.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, -1.0f, 1500.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 3.0f, 4000.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 5.0f, 8000.0f, 1.0f},
-            {OPB_EQ_FILTER_HIGH_SHELF, 6.0f, 14000.0f, 0.7f},
-        }
-    },
-
-    // PODCAST
+    // TREBLE_BOOST - Bright, airy
     {
         .gain0 = 0.0f,
         .gain1 = 0.0f,
         .num_bands = 4,
         .reserved = 0,
         .bands = {
-            {OPB_EQ_FILTER_HIGH_PASS, 0.0f, 80.0f, 0.7f},
-            {OPB_EQ_FILTER_PEAK, 4.0f, 1000.0f, 1.0f},
-            {OPB_EQ_FILTER_PEAK, 5.0f, 2500.0f, 1.0f},
-            {OPB_EQ_FILTER_HIGH_SHELF, -4.0f, 8000.0f, 0.7f},
+            {OPB_EQ_FILTER_PEAK, -2.0f, 400.0f, 1.0f},       // Reduce lower mids
+            {OPB_EQ_FILTER_PEAK, 3.0f, 3000.0f, 1.5f},       // Presence boost
+            {OPB_EQ_FILTER_PEAK, 4.0f, 8000.0f, 1.0f},       // Sparkle
+            {OPB_EQ_FILTER_HIGH_SHELF, 3.0f, 12000.0f, 0.7f}, // Air
+        }
+    },
+
+    // V_SHAPE - Exciting, smiley curve
+    {
+        .gain0 = 0.0f,
+        .gain1 = 0.0f,
+        .num_bands = 5,
+        .reserved = 0,
+        .bands = {
+            {OPB_EQ_FILTER_LOW_SHELF, 5.0f, 80.0f, 0.7f},    // Solid bass
+            {OPB_EQ_FILTER_PEAK, 3.0f, 200.0f, 1.0f},        // Bass punch
+            {OPB_EQ_FILTER_PEAK, -3.0f, 1000.0f, 1.5f},      // Scoop mids
+            {OPB_EQ_FILTER_PEAK, 4.0f, 6000.0f, 1.0f},       // Treble clarity
+            {OPB_EQ_FILTER_HIGH_SHELF, 4.0f, 12000.0f, 0.7f}, // Air
+        }
+    },
+
+    // VOCAL - Clear voice, reduced bass/treble
+    {
+        .gain0 = 0.0f,
+        .gain1 = 0.0f,
+        .num_bands = 5,
+        .reserved = 0,
+        .bands = {
+            {OPB_EQ_FILTER_HIGH_PASS, 0.0f, 80.0f, 0.7f},    // Remove rumble
+            {OPB_EQ_FILTER_PEAK, -2.0f, 250.0f, 1.0f},       // Reduce body boom
+            {OPB_EQ_FILTER_PEAK, 3.0f, 1200.0f, 1.0f},       // Vocal presence
+            {OPB_EQ_FILTER_PEAK, 4.0f, 3000.0f, 1.5f},       // Vocal clarity
+            {OPB_EQ_FILTER_HIGH_SHELF, -2.0f, 10000.0f, 0.7f}, // Reduce harshness
+        }
+    },
+
+    // CLASSICAL - Natural, balanced
+    {
+        .gain0 = 0.0f,
+        .gain1 = 0.0f,
+        .num_bands = 5,
+        .reserved = 0,
+        .bands = {
+            {OPB_EQ_FILTER_LOW_SHELF, 2.0f, 60.0f, 0.7f},    // Warm lows
+            {OPB_EQ_FILTER_PEAK, -1.0f, 300.0f, 1.0f},       // Reduce boxiness
+            {OPB_EQ_FILTER_PEAK, 1.5f, 1500.0f, 1.0f},       // String clarity
+            {OPB_EQ_FILTER_PEAK, 2.0f, 4000.0f, 1.0f},       // Detail
+            {OPB_EQ_FILTER_HIGH_SHELF, 2.0f, 10000.0f, 0.7f}, // Gentle air
+        }
+    },
+
+    // ROCK - Punchy, energetic
+    {
+        .gain0 = 0.0f,
+        .gain1 = 0.0f,
+        .num_bands = 6,
+        .reserved = 0,
+        .bands = {
+            {OPB_EQ_FILTER_LOW_SHELF, 4.0f, 80.0f, 0.7f},    // Bass kick
+            {OPB_EQ_FILTER_PEAK, 3.0f, 200.0f, 1.0f},        // Bass guitar
+            {OPB_EQ_FILTER_PEAK, 2.0f, 800.0f, 1.0f},        // Guitar body
+            {OPB_EQ_FILTER_PEAK, -2.0f, 2000.0f, 1.0f},      // Reduce harshness
+            {OPB_EQ_FILTER_PEAK, 3.0f, 4000.0f, 1.0f},       // Presence
+            {OPB_EQ_FILTER_HIGH_SHELF, 3.0f, 10000.0f, 0.7f}, // Cymbals
+        }
+    },
+
+    // JAZZ - Smooth, detailed
+    {
+        .gain0 = 0.0f,
+        .gain1 = 0.0f,
+        .num_bands = 5,
+        .reserved = 0,
+        .bands = {
+            {OPB_EQ_FILTER_LOW_SHELF, 2.0f, 80.0f, 0.7f},    // Upright bass warmth
+            {OPB_EQ_FILTER_PEAK, 1.5f, 500.0f, 1.0f},        // Piano body
+            {OPB_EQ_FILTER_PEAK, 2.0f, 2000.0f, 1.0f},       // Saxophone presence
+            {OPB_EQ_FILTER_PEAK, 2.5f, 5000.0f, 1.0f},       // Cymbal detail
+            {OPB_EQ_FILTER_HIGH_SHELF, 1.5f, 12000.0f, 0.7f}, // Air
+        }
+    },
+
+    // ELECTRONIC - Deep bass, sparkle
+    {
+        .gain0 = 0.0f,
+        .gain1 = 0.0f,
+        .num_bands = 6,
+        .reserved = 0,
+        .bands = {
+            {OPB_EQ_FILTER_LOW_SHELF, 6.0f, 60.0f, 0.7f},    // Deep sub-bass
+            {OPB_EQ_FILTER_PEAK, 5.0f, 150.0f, 1.0f},        // Bass punch
+            {OPB_EQ_FILTER_PEAK, -2.0f, 600.0f, 1.0f},       // Reduce muddiness
+            {OPB_EQ_FILTER_PEAK, -1.0f, 1500.0f, 1.0f},      // Clear mids
+            {OPB_EQ_FILTER_PEAK, 4.0f, 5000.0f, 1.0f},       // Synth clarity
+            {OPB_EQ_FILTER_HIGH_SHELF, 5.0f, 12000.0f, 0.7f}, // Hi-hat/cymbal sparkle
+        }
+    },
+
+    // PODCAST - Speech optimized
+    {
+        .gain0 = 0.0f,
+        .gain1 = 0.0f,
+        .num_bands = 4,
+        .reserved = 0,
+        .bands = {
+            {OPB_EQ_FILTER_HIGH_PASS, 0.0f, 100.0f, 0.7f},   // Remove rumble/wind
+            {OPB_EQ_FILTER_PEAK, 4.0f, 1200.0f, 1.0f},       // Vocal presence
+            {OPB_EQ_FILTER_PEAK, 4.0f, 3000.0f, 1.0f},       // Intelligibility
+            {OPB_EQ_FILTER_HIGH_SHELF, -3.0f, 8000.0f, 0.7f}, // Reduce sibilance
         }
     }
 };
