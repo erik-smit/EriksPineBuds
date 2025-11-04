@@ -107,15 +107,23 @@ powershell -Command "(Get-Content '%ANDROID_BUILD_FILE%') -replace 'versionName 
 
 echo [OK] Updated Android version in %ANDROID_BUILD_FILE%
 
+REM Set git to auto-convert line endings (suppresses CRLF warnings)
+git config core.autocrlf true
+
 REM Commit version changes
 echo.
 echo Committing version changes...
 git add "%FIRMWARE_VERSION_FILE%" "%ANDROID_BUILD_FILE%"
-git commit -m "Release v%NEW_VERSION%
 
-Bump firmware version to %NEW_VERSION%
-Bump Android app version to %NEW_VERSION% (code: %NEW_VERSION_CODE%)
-"
+REM Create commit message in a temp file
+set COMMIT_MSG_FILE=%TEMP%\opb_release_commit.txt
+echo Release v%NEW_VERSION% > "%COMMIT_MSG_FILE%"
+echo. >> "%COMMIT_MSG_FILE%"
+echo Bump firmware version to %NEW_VERSION% >> "%COMMIT_MSG_FILE%"
+echo Bump Android app version to %NEW_VERSION% (code: %NEW_VERSION_CODE%) >> "%COMMIT_MSG_FILE%"
+
+git commit -F "%COMMIT_MSG_FILE%"
+del "%COMMIT_MSG_FILE%"
 
 echo [OK] Version changes committed
 
