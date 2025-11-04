@@ -5,29 +5,56 @@ The docker image will build bestool for you first, then drop you into the dev co
 
 NOTE: Currently, the SDK is not licensed under an 'open source' license. We are working to resolve this issue, and will be reaching out to contributors and other parties soon. For now, consider this SDK as 'All Rights Reserved'/'shared source'.
 
-## ✨ New: Configurable Touch Controls via Android App
+## ✨ New Features
 
-**This fork adds fully customizable touch controls for your PineBuds!**
+### 🎵 Configurable N-Band Equalizer
+
+**Customize your sound with 10 built-in EQ presets or fine-tune with custom settings!**
+
+- **10 Built-in Presets**: Flat, Bass Boost, Treble Boost, V-Shape, Vocal, Classical, Rock, Jazz, Electronic, Podcast
+- **Real-time Updates**: Switch presets instantly without reconnecting
+- **TWS Sync**: EQ settings sync automatically between left and right earbuds
+- **Persistent Storage**: Your EQ preference survives reboots
+- **Minimal Footprint**: Only 3.5KB flash, 80 bytes RAM
+
+**EQ Presets:**
+- **Bass Boost**: Warm, punchy low-end (6dB @ 100Hz)
+- **Treble Boost**: Bright, airy highs (3-4dB @ 3-12kHz)
+- **V-Shape**: Enhanced bass and treble, reduced mids (popular for EDM)
+- **Vocal**: Optimized for speech and vocals (boost @ 1-3kHz)
+- **Classical**: Natural, balanced for orchestral music
+- **Rock**: Punchy with enhanced guitar presence
+- **Jazz**: Smooth with detailed highs
+- **Electronic**: Deep sub-bass with sparkle
+- **Podcast**: Speech clarity optimized
+
+### 🎯 Configurable Touch Controls
+
+**Fully customizable touch controls for your PineBuds!**
 
 Configure single tap, double tap, triple tap, and long press actions for each earbud independently using the companion Android app. Your custom settings are stored in the earbuds and persist across reboots.
 
 ### Features
 
-- **📱 Android Companion App**: Easy-to-use app for configuring touch controls via Bluetooth LE
+- **📱 Android Companion App**: Easy-to-use app for configuring touch controls and EQ via Bluetooth LE
 - **🎯 Per-Earbud Configuration**: Customize left and right earbuds independently
 - **🔄 Persistent Storage**: Settings saved to NV flash and survive reboots
 - **⚡ Real-time Updates**: Changes apply immediately to your earbuds
-- **🎵 14 Actions Available**: Play/Pause, Next, Previous, Volume Up/Down, ANC Toggle, Voice Assistant, and more
+- **🎵 14 Touch Actions Available**: Play/Pause, Next, Previous, Volume Up/Down, ANC Toggle, Voice Assistant, and more
+- **🎚️ 10 EQ Presets**: Quick access to different sound profiles
 
 ### Screenshots
 
 <p align="center">
-  <img src="docs/images/devices.png" width="45%" alt="Device Scanning Screen" />
-  <img src="docs/images/config.png" width="45%" alt="Configuration Screen" />
+  <img src="docs/images/devices.png" width="30%" alt="Device Scanning Screen" />
+  <img src="docs/images/config.png" width="30%" alt="Configuration Screen" />
+  <img src="docs/images/eq.png" width="30%" alt="EQ Configuration Screen" />
 </p>
 
-**Left**: Device scanning and connection screen showing available BES_ble devices
-**Right**: Configuration screen with customizable touch controls for each earbud
+**Left to Right**:
+- Device scanning and connection screen
+- Touch control configuration for each earbud
+- EQ preset selection with 10 built-in profiles
 
 ### Available Touch Actions
 
@@ -47,9 +74,10 @@ Configure single tap, double tap, triple tap, and long press actions for each ea
 ### Quick Start
 
 1. **Build and flash the firmware** (see Usage section below)
-2. **Install the Android companion app** from `android/` directory or download the APK from releases
+2. **Install the Android companion app** from `android/` directory or download the APK from [releases](../../releases)
 3. **Open the app** and connect to your PineBuds
-4. **Configure your touch controls** - changes save automatically!
+4. **Configure your touch controls and EQ** - changes save automatically!
+5. **Switch EQ presets on the fly** - no need to reconnect!
 
 For detailed Android app instructions, see [android/README.md](android/README.md)
 
