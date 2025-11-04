@@ -22,8 +22,18 @@ int app_opb_config_init(void) {
 
     if (nv_record_get_button_config(&nv_config) == 0) {
         current_config = *nv_config;
+
+        // Always update version to current firmware version
+        current_config.version_major = OPB_CONFIG_VERSION_MAJOR;
+        current_config.version_minor = OPB_CONFIG_VERSION_MINOR;
+        current_config.version_patch = OPB_CONFIG_VERSION_PATCH;
+
         config_initialized = true;
         TRACE(0, "[OPB_CFG] Loaded from NV storage");
+        TRACE(3, "[OPB_CFG] Version: %d.%d.%d",
+              current_config.version_major,
+              current_config.version_minor,
+              current_config.version_patch);
         TRACE(4, "[OPB_CFG] Left: ST=%d DT=%d TT=%d LP=%d",
               nv_config->left.single_tap,
               nv_config->left.double_tap,
