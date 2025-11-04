@@ -46,9 +46,9 @@ Configure single tap, double tap, triple tap, and long press actions for each ea
 ### Screenshots
 
 <p align="center">
-  <img src="docs/images/devices.png" width="30%" alt="Device Scanning Screen" />
-  <img src="docs/images/config.png" width="30%" alt="Configuration Screen" />
-  <img src="docs/images/eq.png" width="30%" alt="EQ Configuration Screen" />
+  <img src="docs/images/devices.jpg" width="30%" alt="Device Scanning Screen" />
+  <img src="docs/images/config.jpg" width="30%" alt="Configuration Screen" />
+  <img src="docs/images/eq.jpg" width="30%" alt="EQ Configuration Screen" />
 </p>
 
 **Left to Right**:
