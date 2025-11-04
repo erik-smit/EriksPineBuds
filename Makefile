@@ -540,12 +540,19 @@ REAL_LDS_FILE := $(LDS_FILE)$(SCATTER_LDS_SUFFIX)
 endif
 endif
 
+# Extract semantic version from config header
+OPB_VERSION_FILE := $(srctree)/services/ble_profiles/opb_config/opb_config_common.h
+OPB_VERSION_MAJOR := $(shell grep 'define OPB_CONFIG_VERSION_MAJOR' $(OPB_VERSION_FILE) | awk '{print $$3}')
+OPB_VERSION_MINOR := $(shell grep 'define OPB_CONFIG_VERSION_MINOR' $(OPB_VERSION_FILE) | awk '{print $$3}')
+OPB_VERSION_PATCH := $(shell grep 'define OPB_CONFIG_VERSION_PATCH' $(OPB_VERSION_FILE) | awk '{print $$3}')
+OPB_VERSION := v$(OPB_VERSION_MAJOR).$(OPB_VERSION_MINOR).$(OPB_VERSION_PATCH)
+
 # Generate REVISION_INFO (might be defined in target)
 ifeq ($(REVISION_INFO),)
 ifeq ($(CUST_TGT_INFO),)
-REVISION_INFO := $(GIT_REVISION):$(T)
+REVISION_INFO := $(OPB_VERSION):$(GIT_REVISION):$(T)
 else
-REVISION_INFO := $(GIT_REVISION):$(CUST_TGT_INFO)
+REVISION_INFO := $(OPB_VERSION):$(GIT_REVISION):$(CUST_TGT_INFO)
 endif
 endif
 
