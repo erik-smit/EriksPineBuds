@@ -69,7 +69,7 @@ typedef struct {
 }
 
 #define OPB_CONFIG_VERSION_MAJOR 1
-#define OPB_CONFIG_VERSION_MINOR 1
+#define OPB_CONFIG_VERSION_MINOR 2
 #define OPB_CONFIG_VERSION_PATCH 0
 
 #ifdef __cplusplus
