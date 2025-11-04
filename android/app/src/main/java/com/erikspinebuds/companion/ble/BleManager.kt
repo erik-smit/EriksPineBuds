@@ -144,10 +144,41 @@ class BleManager(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun connect(device: BluetoothDevice): Flow<BleEvent> = callbackFlow {
         Log.d(TAG, "Connecting to device: ${device.address}")
+
+        // Ensure any previous connection is fully cleaned up before connecting
+        if (bluetoothGatt != null) {
+            Log.w(TAG, "Previous GATT connection still exists, cleaning up first")
+            cleanup()
+            // Give Android time to fully release resources
+            kotlinx.coroutines.delay(500)
+        }
+
         _connectionState.value = ConnectionState.CONNECTING
 
         val gattCallback = object : BluetoothGattCallback() {
             override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+                Log.d(TAG, "onConnectionStateChange: status=$status (0x${status.toString(16)}), newState=$newState")
+
+                // Check if connection operation succeeded
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    Log.e(TAG, "Connection failed with status: $status (0x${status.toString(16)})")
+                    val errorMsg = when (status) {
+                        0x85 -> "Connection timeout (0x85)"
+                        0x3e -> "Connection failed to establish (0x3E)"
+                        0x22 -> "Connection terminated by local host (0x22)"
+                        0x08 -> "Connection timeout (0x08)"
+                        0x13 -> "Connection terminated by peer (0x13)"
+                        0x16 -> "Connection terminated by local host (0x16)"
+                        133 -> "GATT error 133 (device unreachable or internal error)"
+                        else -> "GATT error $status (0x${status.toString(16)})"
+                    }
+                    _connectionState.value = ConnectionState.DISCONNECTED
+                    trySend(BleEvent.Error(errorMsg))
+                    cleanup()
+                    return
+                }
+
+                // Status OK, check connection state
                 when (newState) {
                     BluetoothProfile.STATE_CONNECTED -> {
                         Log.d(TAG, "Connected to GATT server")
@@ -158,7 +189,7 @@ class BleManager(private val context: Context) {
                         gatt.discoverServices()
                     }
                     BluetoothProfile.STATE_DISCONNECTED -> {
-                        Log.d(TAG, "Disconnected from GATT server")
+                        Log.d(TAG, "Disconnected from GATT server (normal disconnect)")
                         _connectionState.value = ConnectionState.DISCONNECTED
                         trySend(BleEvent.Disconnected)
                         cleanup()
@@ -253,7 +284,8 @@ class BleManager(private val context: Context) {
             }
         }
 
-        bluetoothGatt = device.connectGatt(context, false, gattCallback)
+        // Use TRANSPORT_LE to explicitly request BLE connection (not Classic)
+        bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
 
         awaitClose {
             disconnect()
@@ -418,7 +450,11 @@ class BleManager(private val context: Context) {
      */
     @SuppressLint("MissingPermission")
     private fun cleanup() {
-        bluetoothGatt?.close()
+        // Clear GATT cache before closing to prevent stale cache on next connection
+        bluetoothGatt?.let { gatt ->
+            clearGattCache(gatt)
+            gatt.close()
+        }
         bluetoothGatt = null
         leftConfigChar = null
         rightConfigChar = null
@@ -430,6 +466,23 @@ class BleManager(private val context: Context) {
         eqCapabilitiesChar = null
         eqApplyChar = null
         eqStatusChar = null
+    }
+
+    /**
+     * Clear Android's GATT cache
+     * This is necessary when switching between devices to prevent stale cache issues
+     */
+    @SuppressLint("MissingPermission")
+    private fun clearGattCache(gatt: BluetoothGatt): Boolean {
+        try {
+            val refresh = gatt.javaClass.getMethod("refresh")
+            val success = refresh.invoke(gatt) as Boolean
+            Log.d(TAG, "GATT cache cleared: $success")
+            return success
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to clear GATT cache", e)
+            return false
+        }
     }
 }
 

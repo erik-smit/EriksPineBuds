@@ -473,8 +473,28 @@ class MainActivity : AppCompatActivity() {
                 binding.btnSave.visibility = android.view.View.GONE
             }
             is UiState.Error -> {
+                val deviceCount = viewModel.devices.value.size
                 binding.tvStatus.text = "Error: ${state.message}"
                 Toast.makeText(this, state.message, Toast.LENGTH_LONG).show()
+
+                // Enable scan button so user can try again, disable disconnect
+                binding.progressScanning.visibility = android.view.View.GONE
+                binding.btnScan.isEnabled = true
+                binding.btnScan.text = "Scan for Devices"
+                binding.btnDisconnect.isEnabled = false
+                binding.btnSave.isEnabled = false
+                binding.btnReload.isEnabled = false
+
+                // Show device list again if we have devices
+                binding.tvDeviceListTitle.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
+                binding.recyclerDevices.visibility = if (deviceCount > 0) android.view.View.VISIBLE else android.view.View.GONE
+                binding.cardDeviceName.visibility = android.view.View.GONE
+                binding.cardEq.visibility = android.view.View.GONE
+                binding.tvConfigTitle.visibility = android.view.View.GONE
+                binding.cardLeft.visibility = android.view.View.GONE
+                binding.cardRight.visibility = android.view.View.GONE
+                binding.btnReload.visibility = android.view.View.GONE
+                binding.btnSave.visibility = android.view.View.GONE
             }
         }
     }
