@@ -36,6 +36,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.CustomEqActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.MainActivity"
+            android:label="Custom EQ"
+            android:theme="@style/Theme.EriksPineBuds.NoActionBar" />
     </application>
 
 </manifest>

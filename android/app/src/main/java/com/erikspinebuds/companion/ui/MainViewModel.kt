@@ -26,7 +26,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private const val TAG = "MainViewModel"
     }
 
-    private val bleManager = BleManager(application)
+    private val bleManager = BleManager.getInstance(application)
 
     // Scan job to allow cancellation
     private var scanJob: kotlinx.coroutines.Job? = null
@@ -66,6 +66,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _eqAvailable = MutableStateFlow<Boolean>(false)
     val eqAvailable: StateFlow<Boolean> = _eqAvailable.asStateFlow()
+
+    private val _eqCustomConfig = MutableStateFlow<com.erikspinebuds.companion.data.EqConfiguration?>(null)
+    val eqCustomConfig: StateFlow<com.erikspinebuds.companion.data.EqConfiguration?> = _eqCustomConfig.asStateFlow()
 
     /**
      * Start scanning for devices
@@ -269,6 +272,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     Log.e(TAG, "Failed to parse EQ enabled state", e)
                 }
             }
+            GattUuids.EQ_CONFIG -> {
+                try {
+                    val config = com.erikspinebuds.companion.data.EqConfiguration.fromBytes(event.data)
+                    if (config != null) {
+                        _eqCustomConfig.value = config
+                        Log.d(TAG, "EQ custom config loaded: ${config.numBands} bands")
+                    } else {
+                        Log.e(TAG, "Failed to parse EQ config: invalid data")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to parse EQ config", e)
+                }
+            }
         }
     }
 
@@ -457,6 +473,79 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Load custom EQ configuration from device
+     */
+    fun loadCustomEqConfig() {
+        viewModelScope.launch {
+            Log.d(TAG, "Loading custom EQ config from device")
+            val success = bleManager.readEqConfig()
+            if (!success) {
+                Log.e(TAG, "Failed to initiate EQ config read")
+            }
+            // Result will be delivered via BLE callback
+        }
+    }
+
+    /**
+     * Save custom EQ configuration to device
+     */
+    fun saveCustomEqConfig(config: com.erikspinebuds.companion.data.EqConfiguration) {
+        viewModelScope.launch {
+            Log.d(TAG, "Saving custom EQ config: ${config.numBands} bands")
+
+            // Validate configuration
+            if (!config.isValid()) {
+                Log.e(TAG, "Invalid EQ configuration")
+                _uiState.value = UiState.Error("Invalid EQ configuration")
+                return@launch
+            }
+
+            // Update local state
+            _eqCustomConfig.value = config
+            _eqPreset.value = com.erikspinebuds.companion.ble.EqPreset.CUSTOM
+
+            // Write config to device (wait for completion)
+            Log.d(TAG, "Writing EQ config (144 bytes)...")
+            val configResult = bleManager.writeEqConfigSuspend(config)
+            if (configResult.isFailure) {
+                Log.e(TAG, "Failed to write EQ config: ${configResult.exceptionOrNull()?.message}")
+                _uiState.value = UiState.Error("Failed to write EQ config: ${configResult.exceptionOrNull()?.message}")
+                return@launch
+            }
+            Log.d(TAG, "EQ config written successfully")
+
+            // Write preset=CUSTOM (wait for completion)
+            Log.d(TAG, "Writing preset=CUSTOM...")
+            val presetResult = bleManager.writeEqPresetSuspend(com.erikspinebuds.companion.ble.EqPreset.CUSTOM)
+            if (presetResult.isFailure) {
+                Log.e(TAG, "Failed to write CUSTOM preset: ${presetResult.exceptionOrNull()?.message}")
+                _uiState.value = UiState.Error("Failed to set CUSTOM preset: ${presetResult.exceptionOrNull()?.message}")
+                return@launch
+            }
+            Log.d(TAG, "Preset written successfully")
+
+            // Apply the configuration (with save) and wait for completion
+            Log.d(TAG, "Applying EQ config...")
+            val applyResult = bleManager.applyEqConfigSuspend(com.erikspinebuds.companion.ble.EqApplyCommand.APPLY_AND_SAVE)
+            if (applyResult.isFailure) {
+                Log.e(TAG, "Failed to apply EQ config: ${applyResult.exceptionOrNull()?.message}")
+                _uiState.value = UiState.Error("Failed to apply EQ config: ${applyResult.exceptionOrNull()?.message}")
+                return@launch
+            }
+
+            Log.d(TAG, "Custom EQ config applied and saved successfully")
+            _uiState.value = UiState.ConfigurationSaved
+        }
+    }
+
+    /**
+     * Update custom EQ config in memory (doesn't save to device)
+     */
+    fun updateCustomEqConfig(config: com.erikspinebuds.companion.data.EqConfiguration) {
+        _eqCustomConfig.value = config
+    }
+
+    /**
      * Disconnect from device
      */
     fun disconnect() {
@@ -465,6 +554,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _eqAvailable.value = false
         _eqEnabled.value = false
         _eqPreset.value = com.erikspinebuds.companion.ble.EqPreset.FLAT
+        _eqCustomConfig.value = null
         _uiState.value = UiState.Scanning
     }
 

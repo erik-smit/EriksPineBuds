@@ -665,31 +665,52 @@ void app_opb_eq_apply_immediately(void) {
 static void opb_eq_tws_sync_info_prepare_handler(uint8_t *buf, uint16_t *len) {
     TRACE(0, "[OPB_EQ_TWS] Preparing EQ config to sync to peer");
 
-    // SIMPLIFIED: Just send enabled + preset (2 bytes instead of 146)
-    // Slave will load the preset from its own built-in preset array
+    uint8_t *start = buf;
+
+    // Send enabled + preset
     *buf++ = eq_enabled ? 1 : 0;
     *buf++ = (uint8_t)current_preset;
 
-    *len = 2;
-    TRACE(2, "[OPB_EQ_TWS] Prepared: enabled=%d, preset=%d", eq_enabled, current_preset);
+    // If custom preset, send full 144-byte config
+    if (current_preset == OPB_EQ_PRESET_CUSTOM) {
+        TRACE(1, "[OPB_EQ_TWS] Syncing custom EQ config (%d bands)", current_eq_config.num_bands);
+        memcpy(buf, &current_eq_config, sizeof(opb_eq_config_t));
+        buf += sizeof(opb_eq_config_t);
+        *len = 2 + sizeof(opb_eq_config_t);  // 2 + 144 = 146 bytes
+        TRACE(2, "[OPB_EQ_TWS] Prepared: enabled=%d, preset=CUSTOM, len=%d", eq_enabled, *len);
+    } else {
+        // For built-in presets, just send 2 bytes
+        // Slave will load the preset from its own built-in preset array
+        *len = 2;
+        TRACE(2, "[OPB_EQ_TWS] Prepared: enabled=%d, preset=%d, len=2", eq_enabled, current_preset);
+    }
 }
 
 static void opb_eq_tws_sync_info_received_handler(uint8_t *buf, uint16_t len) {
     TRACE(2, "[OPB_EQ_TWS] Received EQ config from peer, len=%d", len);
 
-    if (len != 2) {
-        TRACE(2, "[OPB_EQ_TWS] ERROR: Invalid length %d, expected 2", len);
+    if (len != 2 && len != (2 + sizeof(opb_eq_config_t))) {
+        TRACE(2, "[OPB_EQ_TWS] ERROR: Invalid length %d, expected 2 or %d", len, 2 + sizeof(opb_eq_config_t));
         return;
     }
 
     // Parse enabled + preset
     eq_enabled = (*buf++ != 0);
-    current_preset = (opb_eq_preset_t)*buf;
+    current_preset = (opb_eq_preset_t)*buf++;
 
     TRACE(2, "[OPB_EQ_TWS] Received: enabled=%d, preset=%d", eq_enabled, current_preset);
 
-    // Load the preset from built-in preset array
-    if (current_preset < OPB_EQ_PRESET_MAX) {
+    // Load configuration
+    if (current_preset == OPB_EQ_PRESET_CUSTOM) {
+        // Custom preset: load from received data
+        if (len != (2 + sizeof(opb_eq_config_t))) {
+            TRACE(1, "[OPB_EQ_TWS] ERROR: CUSTOM preset but wrong length %d", len);
+            return;
+        }
+        memcpy(&current_eq_config, buf, sizeof(opb_eq_config_t));
+        TRACE(2, "[OPB_EQ_TWS] Loaded CUSTOM config: %d bands", current_eq_config.num_bands);
+    } else if (current_preset < OPB_EQ_PRESET_MAX) {
+        // Built-in preset: load from built-in preset array
         current_eq_config = eq_presets[current_preset];
         TRACE(2, "[OPB_EQ_TWS] Loaded preset %d: %d bands", current_preset, current_eq_config.num_bands);
     } else {

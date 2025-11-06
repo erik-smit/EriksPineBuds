@@ -209,6 +209,12 @@ class MainActivity : AppCompatActivity() {
             viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.PODCAST)
             Toast.makeText(this, "EQ Preset: Podcast", Toast.LENGTH_SHORT).show()
         }
+
+        // Custom EQ button
+        binding.btnCustomEq.setOnClickListener {
+            val intent = Intent(this, CustomEqActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     private fun showGesturePickerForEarbud(isLeft: Boolean) {

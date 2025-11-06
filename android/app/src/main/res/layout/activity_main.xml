@@ -405,6 +405,15 @@
                     android:textSize="14sp"
                     android:textStyle="italic" />
 
+                <!-- Custom EQ Button -->
+                <Button
+                    android:id="@+id/btn_custom_eq"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="🎛️ Create Custom EQ"
+                    style="@style/Widget.Material3.Button.TonalButton" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

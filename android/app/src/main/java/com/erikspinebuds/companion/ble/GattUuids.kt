@@ -83,7 +83,8 @@ enum class EqPreset(val value: Int, val displayName: String) {
     ROCK(6, "Rock"),
     JAZZ(7, "Jazz"),
     ELECTRONIC(8, "Electronic"),
-    PODCAST(9, "Podcast");
+    PODCAST(9, "Podcast"),
+    CUSTOM(0xFF, "Custom");
 
     companion object {
         fun fromValue(value: Int): EqPreset? {

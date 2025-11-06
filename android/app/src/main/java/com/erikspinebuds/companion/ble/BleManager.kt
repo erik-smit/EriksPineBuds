@@ -10,22 +10,40 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.ParcelUuid
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.UUID
+import kotlin.coroutines.resume
 
 /**
  * Manager for BLE operations with OpenPineBuds
  * Handles device scanning, connection, and GATT communication
  */
-class BleManager(private val context: Context) {
+class BleManager private constructor(private val context: Context) {
 
     companion object {
         private const val TAG = "BleManager"
+
+        @Volatile
+        private var INSTANCE: BleManager? = null
+
+        fun getInstance(context: Context): BleManager {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: BleManager(context.applicationContext).also { INSTANCE = it }
+            }
+        }
     }
 
     private val bluetoothAdapter: BluetoothAdapter? by lazy {
@@ -42,6 +60,13 @@ class BleManager(private val context: Context) {
     // Connection state
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
     val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
+
+    // BLE events shared flow for observing write/read completions
+    private val _bleEvents = kotlinx.coroutines.flow.MutableSharedFlow<BleEvent>(
+        replay = 0,
+        extraBufferCapacity = 10
+    )
+    private val bleEvents: Flow<BleEvent> = _bleEvents
 
     // Configuration characteristics
     private var leftConfigChar: BluetoothGattCharacteristic? = null
@@ -185,8 +210,15 @@ class BleManager(private val context: Context) {
                         _connectionState.value = ConnectionState.CONNECTED
                         trySend(BleEvent.Connected)
 
-                        // Discover services
-                        gatt.discoverServices()
+                        // Request MTU increase for large EQ config writes (144 bytes)
+                        // Default MTU is 23 bytes, we need at least 147 (144 + 3 overhead)
+                        Log.d(TAG, "Requesting MTU = 247 bytes")
+                        val mtuResult = gatt.requestMtu(247)
+                        if (!mtuResult) {
+                            Log.w(TAG, "MTU request failed, will use default MTU - discovering services anyway")
+                            gatt.discoverServices()
+                        }
+                        // If MTU request succeeded, we'll discover services after MTU change completes (in onMtuChanged)
                     }
                     BluetoothProfile.STATE_DISCONNECTED -> {
                         Log.d(TAG, "Disconnected from GATT server (normal disconnect)")
@@ -262,10 +294,14 @@ class BleManager(private val context: Context) {
             ) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.d(TAG, "Characteristic read: ${characteristic.uuid}")
-                    trySend(BleEvent.CharacteristicRead(characteristic.uuid, characteristic.value))
+                    val event = BleEvent.CharacteristicRead(characteristic.uuid, characteristic.value)
+                    trySend(event)
+                    _bleEvents.tryEmit(event)
                 } else {
                     Log.e(TAG, "Characteristic read failed: $status")
-                    trySend(BleEvent.Error("Read failed"))
+                    val event = BleEvent.Error("Read failed")
+                    trySend(event)
+                    _bleEvents.tryEmit(event)
                 }
             }
 
@@ -276,11 +312,27 @@ class BleManager(private val context: Context) {
             ) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     Log.d(TAG, "Characteristic write success: ${characteristic.uuid}")
-                    trySend(BleEvent.CharacteristicWritten(characteristic.uuid))
+                    val event = BleEvent.CharacteristicWritten(characteristic.uuid)
+                    trySend(event)
+                    _bleEvents.tryEmit(event)
                 } else {
                     Log.e(TAG, "Characteristic write failed: $status")
-                    trySend(BleEvent.Error("Write failed"))
+                    val event = BleEvent.Error("Write failed: $status")
+                    trySend(event)
+                    _bleEvents.tryEmit(event)
                 }
+            }
+
+            override fun onMtuChanged(gatt: BluetoothGatt, mtu: Int, status: Int) {
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    Log.d(TAG, "MTU changed successfully to $mtu bytes")
+                } else {
+                    Log.w(TAG, "MTU change failed with status $status, using default MTU")
+                }
+
+                // Now that MTU is negotiated (or failed), discover services
+                Log.d(TAG, "Starting service discovery after MTU negotiation")
+                gatt.discoverServices()
             }
         }
 
@@ -376,7 +428,13 @@ class BleManager(private val context: Context) {
      */
     @SuppressLint("MissingPermission")
     fun writeEqPreset(preset: EqPreset): Boolean {
-        val char = eqPresetChar ?: return false
+        Log.d(TAG, "writeEqPreset: preset=${preset.displayName} (0x${preset.value.toString(16)}), eqPresetChar=${eqPresetChar != null}, bluetoothGatt=${bluetoothGatt != null}")
+        val char = eqPresetChar
+        if (char == null) {
+            Log.e(TAG, "eqPresetChar is null!")
+            return false
+        }
+
         // Convert preset to 4-byte little-endian uint32
         val data = ByteArray(4)
         data[0] = (preset.value and 0xFF).toByte()
@@ -386,7 +444,9 @@ class BleManager(private val context: Context) {
 
         char.value = data
         char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-        return bluetoothGatt?.writeCharacteristic(char) == true
+        val result = bluetoothGatt?.writeCharacteristic(char) == true
+        Log.d(TAG, "writeEqPreset: writeCharacteristic returned $result")
+        return result
     }
 
     /**
@@ -418,6 +478,51 @@ class BleManager(private val context: Context) {
     }
 
     /**
+     * Read custom EQ configuration (144 bytes)
+     */
+    @SuppressLint("MissingPermission")
+    fun readEqConfig(): Boolean {
+        val char = eqConfigChar ?: return false
+        return bluetoothGatt?.readCharacteristic(char) == true
+    }
+
+    /**
+     * Write custom EQ configuration (144 bytes)
+     * @param config EQ configuration to write
+     */
+    @SuppressLint("MissingPermission")
+    fun writeEqConfig(config: com.erikspinebuds.companion.data.EqConfiguration): Boolean {
+        Log.d(TAG, "writeEqConfig: eqConfigChar=${eqConfigChar != null}, bluetoothGatt=${bluetoothGatt != null}")
+        val char = eqConfigChar
+        if (char == null) {
+            Log.e(TAG, "eqConfigChar is null!")
+            return false
+        }
+
+        val data = config.toBytes()
+        Log.d(TAG, "writeEqConfig: data.size=${data.size}")
+        if (data.size != 144) {
+            Log.e(TAG, "Invalid EQ config size: ${data.size}, expected 144")
+            return false
+        }
+
+        char.value = data
+        char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        val result = bluetoothGatt?.writeCharacteristic(char) == true
+        Log.d(TAG, "writeEqConfig: writeCharacteristic returned $result")
+        return result
+    }
+
+    /**
+     * Read EQ capabilities (16 bytes)
+     */
+    @SuppressLint("MissingPermission")
+    fun readEqCapabilities(): Boolean {
+        val char = eqCapabilitiesChar ?: return false
+        return bluetoothGatt?.readCharacteristic(char) == true
+    }
+
+    /**
      * Apply EQ configuration
      * @param command Apply command (APPLY_AND_SAVE, APPLY_TEMPORARY, RESET_TO_FLAT)
      */
@@ -428,6 +533,184 @@ class BleManager(private val context: Context) {
         char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
         return bluetoothGatt?.writeCharacteristic(char) == true
     }
+
+    /**
+     * Suspendable write for EQ config - waits for write completion
+     */
+    suspend fun writeEqConfigSuspend(config: com.erikspinebuds.companion.data.EqConfiguration): Result<Unit> =
+        suspendCancellableCoroutine { continuation ->
+            Log.d(TAG, "writeEqConfigSuspend: Starting")
+
+            val char = eqConfigChar
+            if (char == null) {
+                Log.e(TAG, "eqConfigChar is null!")
+                continuation.resume(Result.failure(Exception("EQ config characteristic not available")))
+                return@suspendCancellableCoroutine
+            }
+
+            val data = config.toBytes()
+            if (data.size != 144) {
+                Log.e(TAG, "Invalid EQ config size: ${data.size}")
+                continuation.resume(Result.failure(Exception("Invalid EQ config size: ${data.size}")))
+                return@suspendCancellableCoroutine
+            }
+
+            // Set up one-time listener for write completion
+            val job = bleEvents.filter { event ->
+                event is BleEvent.CharacteristicWritten && event.uuid == char.uuid
+            }.take(1).onEach { event ->
+                when (event) {
+                    is BleEvent.CharacteristicWritten -> {
+                        Log.d(TAG, "writeEqConfigSuspend: Write completed successfully")
+                        continuation.resume(Result.success(Unit))
+                    }
+                    is BleEvent.Error -> {
+                        Log.e(TAG, "writeEqConfigSuspend: Write failed: ${event.message}")
+                        continuation.resume(Result.failure(Exception(event.message)))
+                    }
+                    else -> {}
+                }
+            }.launchIn(CoroutineScope(Dispatchers.IO))
+
+            continuation.invokeOnCancellation {
+                job.cancel()
+            }
+
+            // Initiate the write with retry logic (Android BLE can be finicky)
+            Log.d(TAG, "writeEqConfigSuspend: char=$char, bluetoothGatt=$bluetoothGatt")
+            Log.d(TAG, "writeEqConfigSuspend: char properties=0x${char.properties.toString(16)}, writeType=${char.writeType}")
+            char.value = data
+            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            Log.d(TAG, "writeEqConfigSuspend: data.size=${data.size}, MTU should be 247")
+
+            var initiated = false
+            var retries = 3
+            while (!initiated && retries > 0) {
+                initiated = bluetoothGatt?.writeCharacteristic(char) == true
+                if (!initiated) {
+                    Log.w(TAG, "writeEqConfigSuspend: Write attempt failed, retries left: ${retries - 1}")
+                    if (retries > 1) {
+                        Thread.sleep(100) // Wait 100ms before retry
+                    }
+                    retries--
+                } else {
+                    Log.d(TAG, "writeEqConfigSuspend: Write initiated successfully")
+                }
+            }
+
+            if (!initiated) {
+                Log.e(TAG, "writeEqConfigSuspend: Failed to initiate write after retries (gatt=${bluetoothGatt != null}, char=${char != null})")
+                job.cancel()
+                continuation.resume(Result.failure(Exception("Failed to initiate write after retries")))
+            } else {
+                Log.d(TAG, "writeEqConfigSuspend: Write initiated, waiting for callback...")
+            }
+        }
+
+    /**
+     * Suspendable write for EQ preset - waits for write completion
+     */
+    suspend fun writeEqPresetSuspend(preset: EqPreset): Result<Unit> =
+        suspendCancellableCoroutine { continuation ->
+            Log.d(TAG, "writeEqPresetSuspend: preset=${preset.name} (0x${preset.value.toString(16)})")
+
+            val char = eqPresetChar
+            if (char == null) {
+                Log.e(TAG, "eqPresetChar is null!")
+                continuation.resume(Result.failure(Exception("EQ preset characteristic not available")))
+                return@suspendCancellableCoroutine
+            }
+
+            // Set up one-time listener for write completion
+            val job = bleEvents.filter { event ->
+                event is BleEvent.CharacteristicWritten && event.uuid == char.uuid
+            }.take(1).onEach { event ->
+                when (event) {
+                    is BleEvent.CharacteristicWritten -> {
+                        Log.d(TAG, "writeEqPresetSuspend: Write completed successfully")
+                        continuation.resume(Result.success(Unit))
+                    }
+                    is BleEvent.Error -> {
+                        Log.e(TAG, "writeEqPresetSuspend: Write failed: ${event.message}")
+                        continuation.resume(Result.failure(Exception(event.message)))
+                    }
+                    else -> {}
+                }
+            }.launchIn(CoroutineScope(Dispatchers.IO))
+
+            continuation.invokeOnCancellation {
+                job.cancel()
+            }
+
+            // Prepare data: 4 bytes, little-endian
+            val data = ByteArray(4)
+            data[0] = preset.value.toByte()
+            data[1] = 0
+            data[2] = 0
+            data[3] = 0
+
+            // Initiate the write
+            char.value = data
+            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            val initiated = bluetoothGatt?.writeCharacteristic(char) == true
+
+            if (!initiated) {
+                Log.e(TAG, "writeEqPresetSuspend: Failed to initiate write")
+                job.cancel()
+                continuation.resume(Result.failure(Exception("Failed to initiate write")))
+            } else {
+                Log.d(TAG, "writeEqPresetSuspend: Write initiated, waiting for callback...")
+            }
+        }
+
+    /**
+     * Suspendable apply EQ config - waits for write completion
+     */
+    suspend fun applyEqConfigSuspend(command: Byte): Result<Unit> =
+        suspendCancellableCoroutine { continuation ->
+            Log.d(TAG, "applyEqConfigSuspend: command=0x${command.toString(16)}")
+
+            val char = eqApplyChar
+            if (char == null) {
+                Log.e(TAG, "eqApplyChar is null!")
+                continuation.resume(Result.failure(Exception("EQ apply characteristic not available")))
+                return@suspendCancellableCoroutine
+            }
+
+            // Set up one-time listener for write completion
+            val job = bleEvents.filter { event ->
+                event is BleEvent.CharacteristicWritten && event.uuid == char.uuid
+            }.take(1).onEach { event ->
+                when (event) {
+                    is BleEvent.CharacteristicWritten -> {
+                        Log.d(TAG, "applyEqConfigSuspend: Write completed successfully")
+                        continuation.resume(Result.success(Unit))
+                    }
+                    is BleEvent.Error -> {
+                        Log.e(TAG, "applyEqConfigSuspend: Write failed: ${event.message}")
+                        continuation.resume(Result.failure(Exception(event.message)))
+                    }
+                    else -> {}
+                }
+            }.launchIn(CoroutineScope(Dispatchers.IO))
+
+            continuation.invokeOnCancellation {
+                job.cancel()
+            }
+
+            // Initiate the write
+            char.value = byteArrayOf(command)
+            char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+            val initiated = bluetoothGatt?.writeCharacteristic(char) == true
+
+            if (!initiated) {
+                Log.e(TAG, "applyEqConfigSuspend: Failed to initiate write")
+                job.cancel()
+                continuation.resume(Result.failure(Exception("Failed to initiate write")))
+            } else {
+                Log.d(TAG, "applyEqConfigSuspend: Write initiated, waiting for callback...")
+            }
+        }
 
     /**
      * Check if EQ service is available
