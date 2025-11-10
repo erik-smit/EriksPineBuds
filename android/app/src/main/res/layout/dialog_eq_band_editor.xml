@@ -109,29 +109,12 @@
         android:value="1.0"
         android:stepSize="0.1" />
 
-    <!-- Buttons -->
-    <LinearLayout
+    <!-- Button -->
+    <Button
+        android:id="@+id/btn_close"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="24dp">
-
-        <Button
-            android:id="@+id/btn_cancel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Cancel"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_marginEnd="8dp" />
-
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Save"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
+        android:text="Close"
+        android:layout_marginTop="24dp" />
 
 </LinearLayout>

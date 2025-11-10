@@ -228,8 +228,16 @@ static int gattc_write_req_ind_handler(ke_msg_id_t const msgid,
                     }
                 }
                 else if (command == 0x02) {
-                    // Apply without saving (already done)
-                    TRACE(0, "[OPB_EQ_TASK] EQ config applied (temporary)");
+                    // Apply without saving (temporary/live preview)
+                    TRACE(0, "[OPB_EQ_TASK] Applying EQ config (temporary, no save)");
+                    app_opb_eq_apply_immediately();
+
+#ifdef TWS_SYSTEM_ENABLED
+                    // Sync to peer earbud for live preview
+                    TRACE(0, "[OPB_EQ_TASK] Syncing temporary EQ to peer");
+                    app_tws_if_sync_info(TWS_SYNC_USER_OPB_EQ);
+#endif
+                    TRACE(0, "[OPB_EQ_TASK] EQ applied temporarily");
                 }
                 else if (command == 0x03) {
                     // Reset to flat

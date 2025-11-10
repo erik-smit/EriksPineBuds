@@ -18,7 +18,8 @@ import kotlin.math.pow
 class EqBandEditorDialog(
     context: Context,
     private val band: EqBand,
-    private val onSave: (EqBand) -> Unit
+    private val onSave: (EqBand) -> Unit,
+    private val onLiveUpdate: ((EqBand) -> Unit)? = null
 ) : Dialog(context) {
 
     private lateinit var binding: DialogEqBandEditorBinding
@@ -49,25 +50,29 @@ class EqBandEditorDialog(
             val frequency = frequencyFromSlider(value)
             band.frequency = frequency
             binding.tvFrequencyValue.text = formatFrequency(frequency)
+            onLiveUpdate?.invoke(band)
         }
 
         // Gain slider (-12 to +12 dB)
         binding.sliderGain.addOnChangeListener { _, value, _ ->
             band.gain = value
             binding.tvGainValue.text = String.format("%.1f dB", value)
+            onLiveUpdate?.invoke(band)
         }
 
         // Q slider (0.3 to 10.0)
         binding.sliderQ.addOnChangeListener { _, value, _ ->
             band.q = value
             binding.tvQValue.text = String.format("%.1f", value)
+            onLiveUpdate?.invoke(band)
         }
 
         // Filter type spinner
         binding.spinnerFilterType.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 band.type = EqFilterType.values()[position]
-                updateQVisibility()
+                updateGainVisibility()
+                onLiveUpdate?.invoke(band)
             }
 
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
@@ -75,17 +80,13 @@ class EqBandEditorDialog(
     }
 
     private fun setupButtons() {
-        binding.btnCancel.setOnClickListener {
-            dismiss()
-        }
-
-        binding.btnSave.setOnClickListener {
-            // Clamp values to valid ranges (clamp returns a NEW copy)
+        binding.btnClose.setOnClickListener {
+            // Clamp values to valid ranges
             band.gain = band.gain.coerceIn(-12.0f, 12.0f)
             band.frequency = band.frequency.coerceIn(20.0f, 20000.0f)
             band.q = band.q.coerceIn(0.3f, 10.0f)
 
-            android.util.Log.d("EqBandEditor", "Saving band: type=${band.type}, freq=${band.frequency}, gain=${band.gain}, q=${band.q}")
+            android.util.Log.d("EqBandEditor", "Closing - band applied live: type=${band.type}, freq=${band.frequency}, gain=${band.gain}, q=${band.q}")
             onSave(band)
             dismiss()
         }
@@ -108,15 +109,24 @@ class EqBandEditorDialog(
         binding.sliderQ.value = band.q
         binding.tvQValue.text = String.format("%.1f", band.q)
 
-        updateQVisibility()
+        updateGainVisibility()
     }
 
     /**
-     * Update Q slider visibility based on filter type
-     * (Low-pass/high-pass/shelf filters may not need Q)
+     * Update gain slider visibility based on filter type
+     * Low-pass and high-pass filters don't use gain (only fc and Q)
      */
-    private fun updateQVisibility() {
-        // For now, always show Q - but you could hide it for certain filter types
+    private fun updateGainVisibility() {
+        val gainRelevant = band.type != EqFilterType.LOW_PASS && band.type != EqFilterType.HIGH_PASS
+
+        binding.sliderGain.isEnabled = gainRelevant
+        binding.sliderGain.alpha = if (gainRelevant) 1.0f else 0.4f
+
+        // Set gain to 0 for filters that don't use it
+        if (!gainRelevant && band.gain != 0.0f) {
+            band.gain = 0.0f
+            binding.tvGainValue.text = "0.0 dB (N/A)"
+        }
     }
 
     /**
