@@ -74,10 +74,19 @@ Configure single tap, double tap, triple tap, and long press actions for each ea
   <img src="docs/images/eq.jpg" width="30%" alt="EQ Configuration Screen" />
 </p>
 
-**Left to Right**:
+<p align="center">
+  <img src="docs/images/customeq1.png" width="30%" alt="Custom EQ Editor" />
+  <img src="docs/images/customeq2.png" width="30%" alt="EQ Band Editor" />
+</p>
+
+**Screenshots (top row, left to right)**:
 - Device scanning and connection screen
 - Touch control configuration for each earbud
-- EQ preset selection with 10 built-in profiles and custom EQ editor
+- EQ preset selection with 10 built-in profiles
+
+**Screenshots (bottom row, left to right)**:
+- Custom EQ editor with saved EQ list and band management
+- EQ band editor with live preview controls
 
 **New in v1.3.0**: Custom EQ editor with up to 8 parametric bands, live preview, saved EQ management, and QR code sharing!
 
