@@ -279,7 +279,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Preset"
+                    android:text="Preset (hold to customize)"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -405,14 +405,33 @@
                     android:textSize="14sp"
                     android:textStyle="italic" />
 
-                <!-- Custom EQ Button -->
-                <Button
-                    android:id="@+id/btn_custom_eq"
+                <!-- Saved Custom EQs Section -->
+                <TextView
+                    android:id="@+id/tv_saved_eqs_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Saved Custom EQs"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tv_saved_eqs_hint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="🎛️ Create Custom EQ"
-                    style="@style/Widget.Material3.Button.TonalButton" />
+                    android:layout_marginTop="4dp"
+                    android:text="Tap to apply • Long press to edit"
+                    android:textSize="12sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:visibility="gone" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_saved_eqs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

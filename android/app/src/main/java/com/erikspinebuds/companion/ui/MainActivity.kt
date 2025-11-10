@@ -12,10 +12,14 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.erikspinebuds.companion.R
 import com.erikspinebuds.companion.data.ButtonAction
+import com.erikspinebuds.companion.data.EqPresets
 import com.erikspinebuds.companion.data.GestureType
 import com.erikspinebuds.companion.databinding.ActivityMainBinding
 import com.erikspinebuds.companion.util.PermissionHelper
+import com.erikspinebuds.companion.data.SavedEqManager
+import com.erikspinebuds.companion.ble.BleManager
 import kotlinx.coroutines.launch
+import android.widget.Button
 
 /**
  * Main activity for the OpenPineBuds Companion app
@@ -25,6 +29,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private lateinit var deviceAdapter: DeviceAdapter
+    private lateinit var savedEqManager: SavedEqManager
+    private lateinit var savedEqAdapter: SavedEqAdapter
 
     // Permission request launcher
     private val permissionLauncher = registerForActivityResult(
@@ -63,6 +69,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
+        // Initialize SavedEqManager
+        savedEqManager = SavedEqManager(this)
+
         // Initialize device list adapter
         deviceAdapter = DeviceAdapter { scanResult ->
             // User tapped on a device - connect to it
@@ -160,61 +169,85 @@ class MainActivity : AppCompatActivity() {
         }
 
         // EQ Preset Buttons
-        binding.btnEqFlat.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.FLAT)
-            Toast.makeText(this, "EQ Preset: Flat", Toast.LENGTH_SHORT).show()
-        }
+        // Short tap = apply preset, long press = customize from preset
+        setupPresetButton(binding.btnEqFlat, com.erikspinebuds.companion.ble.EqPreset.FLAT)
+        setupPresetButton(binding.btnEqBassBoost, com.erikspinebuds.companion.ble.EqPreset.BASS_BOOST)
+        setupPresetButton(binding.btnEqTrebleBoost, com.erikspinebuds.companion.ble.EqPreset.TREBLE_BOOST)
+        setupPresetButton(binding.btnEqVShape, com.erikspinebuds.companion.ble.EqPreset.V_SHAPE)
+        setupPresetButton(binding.btnEqVocal, com.erikspinebuds.companion.ble.EqPreset.VOCAL)
+        setupPresetButton(binding.btnEqClassical, com.erikspinebuds.companion.ble.EqPreset.CLASSICAL)
+        setupPresetButton(binding.btnEqRock, com.erikspinebuds.companion.ble.EqPreset.ROCK)
+        setupPresetButton(binding.btnEqJazz, com.erikspinebuds.companion.ble.EqPreset.JAZZ)
+        setupPresetButton(binding.btnEqElectronic, com.erikspinebuds.companion.ble.EqPreset.ELECTRONIC)
+        setupPresetButton(binding.btnEqPodcast, com.erikspinebuds.companion.ble.EqPreset.PODCAST)
 
-        binding.btnEqBassBoost.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.BASS_BOOST)
-            Toast.makeText(this, "EQ Preset: Bass Boost", Toast.LENGTH_SHORT).show()
-        }
+        // Setup saved EQs list
+        setupSavedEqsList()
+    }
 
-        binding.btnEqTrebleBoost.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.TREBLE_BOOST)
-            Toast.makeText(this, "EQ Preset: Treble Boost", Toast.LENGTH_SHORT).show()
-        }
+    private fun setupSavedEqsList() {
+        savedEqAdapter = SavedEqAdapter(
+            savedEqs = emptyList(),
+            onItemClick = { savedEq ->
+                // Apply saved EQ to device
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("Apply ${savedEq.name}?")
+                    .setMessage("This will apply this custom EQ configuration to your device.")
+                    .setPositiveButton("Apply") { _, _ ->
+                        applySavedEqToDevice(savedEq)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            },
+            onItemLongClick = { savedEq ->
+                // Edit saved EQ
+                val intent = Intent(this, CustomEqActivity::class.java)
+                intent.putExtra("SAVED_EQ_NAME", savedEq.name)
+                startActivity(intent)
+            },
+            onDeleteClick = { savedEq ->
+                // Confirm deletion
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("Delete ${savedEq.name}?")
+                    .setMessage("This will permanently delete this saved EQ configuration.")
+                    .setPositiveButton("Delete") { _, _ ->
+                        savedEqManager.deleteEq(savedEq.name)
+                        refreshSavedEqsList()
+                        Toast.makeText(this, "${savedEq.name} deleted", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+        )
 
-        binding.btnEqVShape.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.V_SHAPE)
-            Toast.makeText(this, "EQ Preset: V-Shape", Toast.LENGTH_SHORT).show()
-        }
+        binding.recyclerSavedEqs.adapter = savedEqAdapter
+        binding.recyclerSavedEqs.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
 
-        binding.btnEqVocal.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.VOCAL)
-            Toast.makeText(this, "EQ Preset: Vocal", Toast.LENGTH_SHORT).show()
-        }
+        // Load saved EQs
+        refreshSavedEqsList()
+    }
 
-        binding.btnEqClassical.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.CLASSICAL)
-            Toast.makeText(this, "EQ Preset: Classical", Toast.LENGTH_SHORT).show()
-        }
+    private fun refreshSavedEqsList() {
+        val savedEqs = savedEqManager.getSavedEqs()
+        savedEqAdapter.updateData(savedEqs)
 
-        binding.btnEqRock.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.ROCK)
-            Toast.makeText(this, "EQ Preset: Rock", Toast.LENGTH_SHORT).show()
+        // Show/hide the saved EQs section based on whether there are any
+        if (savedEqs.isEmpty()) {
+            binding.tvSavedEqsLabel.visibility = android.view.View.GONE
+            binding.tvSavedEqsHint.visibility = android.view.View.GONE
+            binding.recyclerSavedEqs.visibility = android.view.View.GONE
+        } else {
+            binding.tvSavedEqsLabel.visibility = android.view.View.VISIBLE
+            binding.tvSavedEqsHint.visibility = android.view.View.VISIBLE
+            binding.recyclerSavedEqs.visibility = android.view.View.VISIBLE
         }
+    }
 
-        binding.btnEqJazz.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.JAZZ)
-            Toast.makeText(this, "EQ Preset: Jazz", Toast.LENGTH_SHORT).show()
-        }
-
-        binding.btnEqElectronic.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.ELECTRONIC)
-            Toast.makeText(this, "EQ Preset: Electronic", Toast.LENGTH_SHORT).show()
-        }
-
-        binding.btnEqPodcast.setOnClickListener {
-            viewModel.setEqPreset(com.erikspinebuds.companion.ble.EqPreset.PODCAST)
-            Toast.makeText(this, "EQ Preset: Podcast", Toast.LENGTH_SHORT).show()
-        }
-
-        // Custom EQ button
-        binding.btnCustomEq.setOnClickListener {
-            val intent = Intent(this, CustomEqActivity::class.java)
-            startActivity(intent)
-        }
+    override fun onResume() {
+        super.onResume()
+        // Refresh saved EQs list when returning to this activity
+        // (in case user saved a new EQ from CustomEqActivity)
+        refreshSavedEqsList()
     }
 
     private fun showGesturePickerForEarbud(isLeft: Boolean) {
@@ -559,5 +592,73 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .show()
+    }
+
+    private fun applySavedEqToDevice(savedEq: SavedEqManager.SavedEq) {
+        lifecycleScope.launch {
+            try {
+                val bleManager = BleManager.getInstance(applicationContext)
+
+                // Wait for any ongoing BLE operations
+                kotlinx.coroutines.delay(500)
+
+                // Write custom EQ configuration to device
+                val configResult = bleManager.writeEqConfigSuspend(savedEq.config)
+                if (configResult.isFailure) {
+                    Toast.makeText(this@MainActivity, "Failed to write EQ: ${configResult.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+
+                // Write preset as CUSTOM
+                val presetResult = bleManager.writeEqPresetSuspend(com.erikspinebuds.companion.ble.EqPreset.CUSTOM)
+                if (presetResult.isFailure) {
+                    Toast.makeText(this@MainActivity, "Failed to set preset: ${presetResult.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+
+                // Apply the configuration with save
+                val applyResult = bleManager.applyEqConfigSuspend(com.erikspinebuds.companion.ble.EqApplyCommand.APPLY_AND_SAVE)
+                if (applyResult.isFailure) {
+                    Toast.makeText(this@MainActivity, "Failed to apply: ${applyResult.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+
+                // Store as active custom EQ
+                savedEqManager.setActiveCustomEq(savedEq.config)
+                Toast.makeText(this@MainActivity, "${savedEq.name} applied", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    /**
+     * Setup preset button with short-tap to apply and long-press to customize
+     */
+    private fun setupPresetButton(button: Button, preset: com.erikspinebuds.companion.ble.EqPreset) {
+        val presetName = EqPresets.getPresetName(preset)
+        val presetDescription = EqPresets.getPresetDescription(preset)
+
+        // Short tap: Apply preset directly
+        button.setOnClickListener {
+            viewModel.setEqPreset(preset)
+            Toast.makeText(this, "$presetName applied", Toast.LENGTH_SHORT).show()
+        }
+
+        // Long press: Customize from preset
+        button.setOnLongClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Customize $presetName")
+                .setMessage("$presetDescription\n\nOpen custom EQ editor with this preset as a starting point?")
+                .setPositiveButton("Customize") { _, _ ->
+                    val intent = Intent(this, CustomEqActivity::class.java)
+                    intent.putExtra("PRESET_NAME", presetName)
+                    intent.putExtra("PRESET_ORDINAL", preset.ordinal)
+                    startActivity(intent)
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+            true  // Consume the long click event
+        }
     }
 }
