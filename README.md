@@ -7,17 +7,38 @@ NOTE: Currently, the SDK is not licensed under an 'open source' license. We are 
 
 ## ✨ New Features
 
-### 🎵 Configurable N-Band Equalizer
+### 🎛️ Custom EQ Editor with Live Preview (v1.3.0)
 
-**Customize your sound with 10 built-in EQ presets or fine-tune with custom settings!**
+**Create your own parametric EQ configurations with real-time audio feedback!**
 
-- **10 Built-in Presets**: Flat, Bass Boost, Treble Boost, V-Shape, Vocal, Classical, Rock, Jazz, Electronic, Podcast
-- **Real-time Updates**: Switch presets instantly without reconnecting
-- **TWS Sync**: EQ settings sync automatically between left and right earbuds
-- **Persistent Storage**: Your EQ preference survives reboots
-- **Minimal Footprint**: Only 3.5KB flash, 80 bytes RAM
+- **Up to 8-Band Parametric EQ**: Full control over frequency response
+- **5 Filter Types**: Low Shelf, Peak, High Shelf, Low Pass, High Pass
+- **Per-Band Control**: Frequency (20Hz-20kHz), Gain (-12 to +12dB), Q Factor (0.3-10.0)
+- **Live Preview**: Hear changes instantly while adjusting sliders
+- **Save & Share**: Save custom EQs with names, share via QR code
+- **10 Built-in Presets**: Professional starting points for customization
 
-**EQ Presets:**
+**Live Preview Features:**
+- **Real-time Audio Changes**: No need to save to hear adjustments
+- **500ms Debouncing**: Smooth slider operation without BLE flooding
+- **TWS Sync**: Both earbuds update simultaneously
+
+**QR Code Sharing:**
+- **Generate & Share**: Create QR codes from any custom EQ
+- **Easy Import**: Scan QR codes to import shared configurations
+- **Gallery Integration**: Saves QR images to Pictures/OpenPineBuds/
+- **Cross-Platform**: Share via any messaging app
+
+**Saved EQ Management:**
+- **Persistent Storage**: Save unlimited custom EQs with names
+- **Quick Access**: Apply, edit, or delete from saved list
+- **Auto-Save**: Active EQ configuration tracked automatically
+
+### 🎵 Built-in EQ Presets
+
+**10 professionally tuned presets optimized for different music genres:**
+
+- **Flat**: Reference tuning, uncolored sound
 - **Bass Boost**: Warm, punchy low-end (6dB @ 100Hz)
 - **Treble Boost**: Bright, airy highs (3-4dB @ 3-12kHz)
 - **V-Shape**: Enhanced bass and treble, reduced mids (popular for EDM)
@@ -27,6 +48,8 @@ NOTE: Currently, the SDK is not licensed under an 'open source' license. We are 
 - **Jazz**: Smooth with detailed highs
 - **Electronic**: Deep sub-bass with sparkle
 - **Podcast**: Speech clarity optimized
+
+**Long-press any preset** to open the custom EQ editor with that preset as a starting point!
 
 ### 🎯 Configurable Touch Controls
 
@@ -54,7 +77,9 @@ Configure single tap, double tap, triple tap, and long press actions for each ea
 **Left to Right**:
 - Device scanning and connection screen
 - Touch control configuration for each earbud
-- EQ preset selection with 10 built-in profiles
+- EQ preset selection with 10 built-in profiles and custom EQ editor
+
+**New in v1.3.0**: Custom EQ editor with up to 8 parametric bands, live preview, saved EQ management, and QR code sharing!
 
 ### Available Touch Actions
 
