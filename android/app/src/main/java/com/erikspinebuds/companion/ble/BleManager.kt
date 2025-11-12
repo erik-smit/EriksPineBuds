@@ -8,6 +8,7 @@ import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
+import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
@@ -136,12 +137,18 @@ class BleManager private constructor(private val context: Context) {
             .setServiceUuid(ParcelUuid(GattUuids.CONFIG_SERVICE))
             .build()
 
-        val scanSettings = ScanSettings.Builder()
+        val scanSettingsBuilder = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-            .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-            .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
             .setReportDelay(0)  // Report immediately
-            .build()
+
+        // API 23+ features
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            scanSettingsBuilder
+                .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+        }
+
+        val scanSettings = scanSettingsBuilder.build()
 
         Log.d(TAG, "Starting BLE scan for devices with service ${GattUuids.CONFIG_SERVICE}...")
 
@@ -336,8 +343,12 @@ class BleManager private constructor(private val context: Context) {
             }
         }
 
-        // Use TRANSPORT_LE to explicitly request BLE connection (not Classic)
-        bluetoothGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+        // Use TRANSPORT_LE to explicitly request BLE connection (not Classic) on API 23+
+        bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+        } else {
+            device.connectGatt(context, false, gattCallback)
+        }
 
         awaitClose {
             disconnect()
@@ -537,6 +548,7 @@ class BleManager private constructor(private val context: Context) {
     /**
      * Suspendable write for EQ config - waits for write completion
      */
+    @SuppressLint("MissingPermission")
     suspend fun writeEqConfigSuspend(config: com.erikspinebuds.companion.data.EqConfiguration): Result<Unit> =
         suspendCancellableCoroutine { continuation ->
             Log.d(TAG, "writeEqConfigSuspend: Starting")
@@ -610,6 +622,7 @@ class BleManager private constructor(private val context: Context) {
     /**
      * Suspendable write for EQ preset - waits for write completion
      */
+    @SuppressLint("MissingPermission")
     suspend fun writeEqPresetSuspend(preset: EqPreset): Result<Unit> =
         suspendCancellableCoroutine { continuation ->
             Log.d(TAG, "writeEqPresetSuspend: preset=${preset.name} (0x${preset.value.toString(16)})")
@@ -666,6 +679,7 @@ class BleManager private constructor(private val context: Context) {
     /**
      * Suspendable apply EQ config - waits for write completion
      */
+    @SuppressLint("MissingPermission")
     suspend fun applyEqConfigSuspend(command: Byte): Result<Unit> =
         suspendCancellableCoroutine { continuation ->
             Log.d(TAG, "applyEqConfigSuspend: command=0x${command.toString(16)}")

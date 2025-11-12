@@ -47,7 +47,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_delete"
             android:contentDescription="Delete EQ"
-            android:tint="?android:attr/textColorSecondary" />
+            app:tint="?android:attr/textColorSecondary" />
 
     </LinearLayout>
 
